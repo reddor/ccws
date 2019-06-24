@@ -1,0 +1,18 @@
+# compiler generated files
+src/*.o
+src/*.ppu
+src/lib
+src/lib/*
+*.swp
+
+# server binary & its generated files
+ccws
+ccws.pid
+
+# IDE generated backup files
+src/backup
+src/backup/*
+
+# chakracore binaries dir
+src/cclib
+src/cclib/*
