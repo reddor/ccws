@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="10"/>
+    <BuildModes Active="Default"/>
+    <Units Count="25">
+      <Unit0>
+        <Filename Value="ccws.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <CursorPos X="10" Y="16"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="chakracoreinstance.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="19"/>
+        <CursorPos X="105" Y="28"/>
+        <UsageCount Value="21"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="ccwssettings.inc"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="22"/>
+        <CursorPos X="15"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="chakracore\samples\HostSample\Console.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="43"/>
+        <CursorPos X="19" Y="63"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="webserver.pas"/>
+        <EditorIndex Value="15"/>
+        <TopLine Value="1179"/>
+        <CursorPos X="8" Y="1285"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="sslclass.pas"/>
+        <EditorIndex Value="21"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="epollsockets.pas"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="19"/>
+        <TopLine Value="326"/>
+        <CursorPos X="35" Y="341"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="webserverhosts.pas"/>
+        <EditorIndex Value="14"/>
+        <TopLine Value="360"/>
+        <CursorPos X="24" Y="373"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="filecache.pas"/>
+        <EditorIndex Value="17"/>
+        <TopLine Value="184"/>
+        <CursorPos X="28" Y="184"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="chakracore\src\common.inc"/>
+        <EditorIndex Value="12"/>
+        <TopLine Value="15"/>
+        <CursorPos X="35" Y="15"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="chakrainstance.pas"/>
+        <EditorIndex Value="7"/>
+        <TopLine Value="209"/>
+        <CursorPos X="6" Y="229"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="datautils.pas"/>
+        <EditorIndex Value="13"/>
+        <TopLine Value="43"/>
+        <CursorPos X="100" Y="43"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="logging.pas"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="34"/>
+        <CursorPos X="92" Y="43"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="chakrarttiobject.pas"/>
+        <UnitName Value="ChakraRTTIObject"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="15"/>
+        <CursorPos X="97" Y="33"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="chakracore\src\ChakraCoreClasses.pas"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="318"/>
+        <CursorPos X="17" Y="333"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="console.pas"/>
+        <UnitName Value="Console"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="29"/>
+        <CursorPos X="106" Y="43"/>
+        <UsageCount Value="10"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="mimehelper.pas"/>
+        <EditorIndex Value="18"/>
+        <TopLine Value="36"/>
+        <CursorPos Y="57"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="chakrawebsocket.pas"/>
+        <EditorIndex Value="20"/>
+        <TopLine Value="477"/>
+        <CursorPos X="38" Y="490"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="xmlhttprequest.pas"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="104"/>
+        <CursorPos X="29" Y="108"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="chakraevents.pas"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="12"/>
+        <CursorPos X="17" Y="12"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit19>
+      <Unit20>
+        <Filename Value="chakraserverconfig.pas"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="472"/>
+        <CursorPos X="68" Y="489"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit20>
+      <Unit21>
+        <Filename Value="chakracore\src\ChakraCore.pas"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="1265"/>
+        <CursorPos X="99" Y="1285"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit21>
+      <Unit22>
+        <Filename Value="chakracore\src\ChakraCoreUtils.pas"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="24"/>
+        <CursorPos X="29" Y="38"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="chakracore\src\ChakraCommon.pas"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="1971"/>
+        <CursorPos X="12" Y="1985"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="httphelper.pas"/>
+        <EditorIndex Value="16"/>
+        <TopLine Value="374"/>
+        <CursorPos Y="388"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit24>
+    </Units>
+    <JumpHistory Count="26" HistoryIndex="25">
+      <Position1>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1285" TopLine="1265"/>
+      </Position1>
+      <Position2>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1288" TopLine="1275"/>
+      </Position2>
+      <Position3>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1289" TopLine="1275"/>
+      </Position3>
+      <Position4>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1291" TopLine="1275"/>
+      </Position4>
+      <Position5>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1293" TopLine="1275"/>
+      </Position5>
+      <Position6>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1288" TopLine="1275"/>
+      </Position6>
+      <Position7>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1289" TopLine="1275"/>
+      </Position7>
+      <Position8>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1293" TopLine="1275"/>
+      </Position8>
+      <Position9>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1295" TopLine="1275"/>
+      </Position9>
+      <Position10>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1297" TopLine="1275"/>
+      </Position10>
+      <Position11>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="748" TopLine="735"/>
+      </Position11>
+      <Position12>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="518" TopLine="505"/>
+      </Position12>
+      <Position13>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1221" TopLine="1208"/>
+      </Position13>
+      <Position14>
+        <Filename Value="epollsockets.pas"/>
+        <Caret Line="403" TopLine="390"/>
+      </Position14>
+      <Position15>
+        <Filename Value="epollsockets.pas"/>
+        <Caret Line="401" Column="15" TopLine="387"/>
+      </Position15>
+      <Position16>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1221" TopLine="1208"/>
+      </Position16>
+      <Position17>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1283" Column="13" TopLine="1272"/>
+      </Position17>
+      <Position18>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="697" TopLine="684"/>
+      </Position18>
+      <Position19>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="100" Column="15" TopLine="92"/>
+      </Position19>
+      <Position20>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="113" Column="23" TopLine="92"/>
+      </Position20>
+      <Position21>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1297" Column="8" TopLine="1284"/>
+      </Position21>
+      <Position22>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1298" TopLine="1278"/>
+      </Position22>
+      <Position23>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1297" TopLine="1278"/>
+      </Position23>
+      <Position24>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1299" TopLine="1278"/>
+      </Position24>
+      <Position25>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1285" Column="8" TopLine="1273"/>
+      </Position25>
+      <Position26>
+        <Filename Value="epollsockets.pas"/>
+        <Caret Line="111" Column="17" TopLine="101"/>
+      </Position26>
+    </JumpHistory>
+  </ProjectSession>
+  <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="epollsockets.pas"/>
+        <Line Value="475"/>
+      </Item1>
+    </BreakPoints>
+  </Debugging>
+</CONFIG>
