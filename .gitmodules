@@ -1,0 +1,3 @@
+[submodule "src/chakracore"]
+	path = src/chakracore
+	url = https://github.com/tondrej/chakracore-delphi
