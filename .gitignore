@@ -8,6 +8,9 @@ src/lib/*
 # server binary & its generated files
 ccws
 ccws.pid
+ccws.err
+ccws.log
+ccws.std
 
 # IDE generated backup files
 src/backup
