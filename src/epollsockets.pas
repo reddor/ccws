@@ -454,8 +454,7 @@ begin
 
     if result and (i>0) then
     begin
-      Writeln(Copy(FOutBuffer, 1, i));
-      delete(FOutbuffer, 1, i);
+      Delete(FOutbuffer, 1, i);
     end;
 
     if (Length(FOutBuffer)>0) or (Assigned(FSSL)and FSSL.WantWrite)
