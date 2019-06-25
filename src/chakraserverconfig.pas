@@ -56,7 +56,7 @@ type
     { readFile(filename) - returns the content of filename. directory root for this function is the site web folder }
     function readFile(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { unload() - unloads the site. the ecmascript site object will remain in memory until the garbage collector frees it }
-    function unload(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    function unload({%H-}Arguments: PJsValueRefArray; {%H-}CountArguments: word): JsValueRef;
   end;
 
   { TChakraWebserverListener }
@@ -70,11 +70,6 @@ type
   published
     { remove() - removes this listener }
     function remove(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-
-    function enableSSL(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-
-    function setCiphers(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-
     property ip: string read GetIP;
     property port: string read GetPort;
   end;
@@ -172,30 +167,6 @@ begin
       Result:=JsTrueValue;
     end;
   end;
-end;
-
-function TChakraWebserverListener.enableSSL(Arguments: PJsValueRefArray;
-  CountArguments: word): JsValueRef;
-begin
-  Result:=JsUndefinedValue;
-  if CountArguments<3 then
-   Exit;
-  if Assigned(FListener) then
-    if not FListener.SSL then
-
-    FListener.EnableSSL(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))),
-                        string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))),
-                        string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[2]))));
-end;
-
-function TChakraWebserverListener.setCiphers(Arguments: PJsValueRefArray;
-  CountArguments: word): JsValueRef;
-begin
-  Result:=JsUndefinedValue;
-  if CountArguments<1 then
-   Exit;
-  if Assigned(FListener) and(FListener.SSL) then
-    FListener.SetSSLCiphers(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
 end;
 
 { TChakraWebserverSite }
@@ -365,11 +336,6 @@ begin
   ListenerObj.FServer:=FServer;
 
   Result:=ListenerObj.Instance;
-
-  if CountArguments<5 then
-    Exit;
-  if Assigned(Listener) then
-    Listener.EnableSSL(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[2]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[3]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[4]))));
 end;
 
 function TChakraWebserverObject.removeListener(Arguments: PJsValueRefArray;
