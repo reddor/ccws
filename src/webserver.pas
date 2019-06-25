@@ -20,7 +20,6 @@ uses
   contnrs,
   MD5,
   webserverhosts,
-  sslclass,
   logging;
 
 const
@@ -112,20 +111,14 @@ type
     FParent: TWebserver;
     FIP: string;
     FPort: string;
-    FSSLContext: TAbstractSSLContext;
-    FSSL: Boolean;
   protected
     procedure Execute; override;
   public
     constructor Create(Parent: TWebserver; IP, Port: string);
     destructor Destroy; override;
-    procedure EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: string);
-    function SetSSLCiphers(const Ciphers: string): Boolean;
     property IP: string read FIP;
     property Port: string read FPort;
     property Parent: TWebserver read FParent;
-    property SSLContext: TAbstractSSLContext read FSSLContext;
-    property SSL: Boolean read FSSL;
   end;
 
   { TWebserverWorkerThread }
@@ -157,7 +150,7 @@ type
     function SetThreadCount(Count: Integer): Boolean;
     function AddListener(IP, Port: string): TWebserverListener;
     function RemoveListener(Listener: TWebserverListener): Boolean;
-    procedure Accept(Sock: TSocket; IsSSL: Boolean; SSLContext: TAbstractSSLContext);
+    procedure Accept(Sock: TSocket);
     procedure FreeConnection(Connection: THTTPConnection);
     property SiteManager: TWebserverSiteManager read FSiteManager;
     property TestMode: Boolean read FTestMode;
@@ -167,11 +160,7 @@ type
 implementation
 
 uses
-  IniFiles,
   buildinfo,
-{$ifdef OPENSSL_SUPPORT}
-  opensslclass,
-{$ENDIF}
   mimehelper,
   sha1,
 //  BESENStringUtils,
@@ -329,7 +318,7 @@ begin
               continue;
             end;
           end;
-          FParent.Accept(ClientSock, FSSL, FSSLContext);
+          FParent.Accept(ClientSock);
         end else
         begin
           if not AcceptError then
@@ -357,37 +346,12 @@ begin
   FIP:=IP;
   FParent:=Parent;
   FPort:=Port;
-  FSSL:=False;
-  {$IFDEF OPENSSL_SUPPORT}
-  FSSLContext:=TOpenSSLContext.Create;
-  {$ENDIF}
   inherited Create(False);
 end;
 
 destructor TWebserverListener.Destroy; 
 begin
   inherited Destroy;
-  {$IFDEF OPENSSL_SUPPORT}
-  FSSLContext.Free;
-  {$ENDIF}
-end;
-
-procedure TWebserverListener.EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: string);
-begin
-  if (not Assigned(FSSLContext)) or (FSSL) then
-    Exit;
-
-  FSSL:=FSSLContext.Enable(PrivateKeyFile, CertificateFile, CertPassword);
-end;
-
-function TWebserverListener.SetSSLCiphers(const Ciphers: string): Boolean;
-begin
-  {$IFDEF OPENSSL_SUPPORT}
-  if FSSL and (FSSLContext is TOpenSSLContext) then
-    result:=TOpenSSLContext(FSSLContext).SetCipherList(Ciphers)
-  else
-  {$ENDIF}
-    result:=False;
 end;
 
 { THTTPConnection }
@@ -1366,7 +1330,7 @@ end;
 const
   SendHelp: string = 'internal server error';
 
-procedure TWebserver.Accept(Sock: TSocket; IsSSL: Boolean; SSLContext: TAbstractSSLContext);
+procedure TWebserver.Accept(Sock: TSocket);
 var c: THTTPConnection;
 begin
   if FWorkerCount = 0 then
@@ -1394,10 +1358,6 @@ begin
   if not Assigned(c) then
     c:=THTTPConnection.Create(Self, Sock);
 
-  c.WantSSL:=IsSSL;
-  c.SSLContext:=SSLContext;
-
-  //c.GetPeerName;
   c.Relocate(FWorker[fcurrthread]);
 end;
 
