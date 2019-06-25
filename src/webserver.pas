@@ -1170,7 +1170,6 @@ begin
 
     SendRaw(freply.Build(result), False);
 
-    Writeln('Sending file');
     repeat
       BlockRead(F, Buffer, SizeOf(Buffer), BytesRead);
       if BytesRead > 0 then
@@ -1179,11 +1178,8 @@ begin
       end;
     until BytesRead = 0;
   finally
-    Writeln('File comipleted');
     CloseFile(f);
-
     CheckMessageBody; // this is just a courtesy call to remove bogus post-data from our inbuffer
-
     if not FKeepAlive then
       Close;
   end;
