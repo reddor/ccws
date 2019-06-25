@@ -36,15 +36,20 @@ type
     property Handle: JsValueRef read FHandle;
     property Parent: TNodeModule read FParent;
     property Require: JsValueRef read FRequire;
-end;
+  end;
+
+  TChakraInstance = class;
 
   { TChakraSystemObject }
 
   TChakraSystemObject = class(TNativeRTTIObject)
   private
+    FChakraInstance: TChakraInstance;
     FSite: TWebserverSite;
     function PostTimedTask(Args: PJsValueRefArray; ArgCount: Word;
       RepeatCount: Integer): JsValueRef;
+  public
+    constructor Create(AInstance: TChakraInstance);
   published
     function log(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function setTimeout(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
@@ -82,7 +87,7 @@ end;
     function ResolveFile(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
     function ResolveIndex(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
     function ResolveModules(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
-function RunModule(Module: TNodeModule): JsValueRef;
+    function RunModule(Module: TNodeModule): JsValueRef;
   public
     constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite; Thread: TThread= nil);
       reintroduce;
@@ -203,32 +208,42 @@ function TChakraSystemObject.PostTimedTask(Args: PJsValueRefArray;
 var
   AMessage: TTaskMessage;
   Delay: Cardinal;
-  FuncArgs: array[0..0] of JsValueRef;
+  FuncArgs: array of JsValueRef;
   I: Integer;
 begin
   Result := JsUndefinedValue;
 
-  if ArgCount < 2 then // thisarg, function to call, optional: delay, function args
+  if ArgCount < 1 then // function to call, optional: delay, function args
     raise Exception.Create('Invalid arguments');
 
-  if ArgCount >= 3 then
-    Delay := JsNumberToInt(Args^[2])
+  if ArgCount >= 2 then
+    Delay := JsNumberToInt(Args^[1])
   else
     Delay := 0;
 
-  if ArgCount >= 4 then
+  if JsGetValueType(Args^[0]) <> JsFunction then
+    raise Exception.Create('Only functions allowed for timed events');
+
+  if ArgCount >= 3 then
   begin
-    for I := 0 to ArgCount - 4 do
-      FuncArgs[I] := Args^[I + 3];
+    Setlength(FuncArgs, ArgCount - 2);
+    for I := 0 to ArgCount - 3 do
+      FuncArgs[I] := Args^[I + 2];
   end;
 
-  AMessage := TTaskMessage.Create(Context, Args^[1], Args^[0], FuncArgs, Delay, RepeatCount);
+  AMessage := TTaskMessage.Create(FChakraInstance.Context, Args^[0], nil, FuncArgs, Delay, RepeatCount);
   try
     Context.PostMessage(AMessage);
   except
     AMessage.Free;
     raise;
   end;
+end;
+
+constructor TChakraSystemObject.Create(AInstance: TChakraInstance);
+begin
+  inherited Create();
+  FChakraInstance:=AInstance;
 end;
 
 function TChakraSystemObject.log(Arguments: PJsValueRefArray;
@@ -300,12 +315,11 @@ procedure TChakraInstance.ConsolePrint(Sender: TObject;
   const Text: UnicodeString; Level: TInfoLevel);
 begin
   case Level of
-    ilError: Write('[Error] ');
-    ilInfo: Write(' [Info] ');
-    ilNone: Write('  [Log] ');
-    ilWarn: Write(' [Warn] ');
+    ilError: dolog(llError, UTF8Encode(Text));
+    ilInfo: dolog(llNotice, UTF8Encode(Text));
+    ilNone: dolog(llDebug, UTF8Encode(Text));
+    ilWarn: dolog(llWarning, UTF8Encode(Text));
   end;
-  Writeln(Text);
 end;
 
 function TChakraInstance.FindModule(ARequire: JsValueRef): TNodeModule;
@@ -566,7 +580,7 @@ begin
   FMainModule := TNodeModule.Create(nil);
   FModules.Add(FMainModule);
 
-  FSystemObject:=TChakraSystemObject.Create();
+  FSystemObject:=TChakraSystemObject.Create(Self);
   JsSetProperty(FContext.Global, 'system', FSystemObject.Instance);
 
   {$IFDEF MSWINDOWS}

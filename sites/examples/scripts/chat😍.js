@@ -1,7 +1,4 @@
-/* 
-besenws chat example (c) Simon Ley, 2017
-
-a simple chat example, one big room, free for all. see chat.html for clientside implementation */
+/* an unorganized testbed of small tests */
 
 // all connected (and authenticated) clients are stored in this array
 var clients = [];
@@ -34,6 +31,13 @@ function dump(obj) {
   }
   console.log("****");
 }
+
+console.log("setTimeout Test 1");
+
+system.setTimeout(function() {
+  console.log("Hello from TimeOut");
+}, 1000);
+console.log("setTimeout Test 2");
 
 // global data receive handler - a client just sent us something
 handler.onData = function(client, data) {
