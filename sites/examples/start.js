@@ -1,3 +1,3 @@
 (function(site) {
-  site.addWebsocket("/chat", "chat.js");
+  site.addWebsocket("/chat", "chat😍.js");
 })

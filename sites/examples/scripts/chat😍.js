@@ -66,6 +66,7 @@ handler.onData = function(client, data) {
       // add user to global client list and announce him to the others!
       clients.push(client);
       broadcast({type:"user", name:client.name, reason:"join"});
+      broadcast({type:"message", name:client.name, message:"Hello 😘"});
       
       client.send(JSON.stringify({type:"userlist", users:names}));
      

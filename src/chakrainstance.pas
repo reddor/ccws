@@ -87,11 +87,11 @@ uses
 function LoadFile(const FileName: string): string;
 var
   FileStream: TFileStream;
-  S: string;
+  S: UTF8String;
 begin
   Result := '';
 
-  FileStream := TFileStream.Create(ansistring(FileName), fmOpenRead);
+  FileStream := TFileStream.Create(FileName, fmOpenRead);
   try
     if FileStream.Size = 0 then
       Exit;
@@ -99,7 +99,7 @@ begin
     SetLength(S, FileStream.Size);
     FileStream.Read(S[1], FileStream.Size);
 
-    Result := s;
+    Result := S;
   finally
     FileStream.Free;
   end;
@@ -254,13 +254,13 @@ procedure TChakraInstance.ContextLoadModule(Sender: TObject; Module: TChakraModu
 var
   ModuleFileName: string;
 begin
-  ModuleFileName := IncludeTrailingPathDelimiter(FBasePath) +
-    string(ChangeFileExt(string(Module.Name), '.js'));
+  // TODO: fix unicode
+  ModuleFileName := IncludeTrailingPathDelimiter(FBasePath) + ChangeFileExt(UTF8Encode(Module.Name), '.js');
   if FileExists(ModuleFileName) then
   begin
-    Module.Parse(LoadFile(ModuleFileName));
+    Module.Parse(UTF8ToString(LoadFile(ModuleFileName)));
     Module.URL := WideFormat('file://%s/%s',
-      [FAlias, string(ChangeFileExt(string(Module.Name), '.js'))]);
+      [FAlias, UTF8Decode(ChangeFileExt(UTF8Encode(Module.Name), '.js'))]);
   end;
 end;
 
@@ -347,11 +347,10 @@ var
   OldPath, S: string;
 begin
   OldPath := FBasePath;
-  S := ExtractFilePath(ScriptFilename);
+  S := ExtractFilePath(UTF8Encode(ScriptFilename));
   if S <> '' then
     FBasePath := S;
-  FContext.RunScript(LoadFile(ScriptFilename),
-      string(ExtractFileName(ScriptFilename)));
+  FContext.RunScript(UTF8ToString(LoadFile(ScriptFilename)), UTF8ToString(ExtractFileName(ScriptFilename)));
   FBasePath := OldPath;
 end;
 
