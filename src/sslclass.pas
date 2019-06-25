@@ -1,6 +1,6 @@
 unit sslclass;
 
-{$mode delphi}
+{$i ccwssettings.inc}
 
 interface
 
@@ -29,10 +29,12 @@ type
     property Parent: TAbstractSSLContext read FParent;
   end;
 
+  { TAbstractSSLContext }
+
   TAbstractSSLContext = class
   public
-    function Enable(const PrivateKeyFile, CertificateFile, CertPassword: ansistring): Boolean; virtual; abstract;
-    function StartSession(Socket: TSocket; LogPrefix: ansistring): TAbstractSSLSession; virtual; abstract;
+    function Enable(const PrivateKeyFile, CertificateFile, CertPassword: string): Boolean; virtual; abstract;
+    function StartSession(Socket: TSocket; LogPrefix: string): TAbstractSSLSession; virtual; abstract;
   end;
 
 implementation

@@ -1,22 +1,5 @@
 unit chakraevents;
-{
- simple event handling
 
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -33,7 +16,7 @@ uses
 
 
 const
-  EventBufferSize = 2048; // must be 2^n, otherwise nasty bugs in wrap-around
+  EventBufferSize = 2048; // must be 2^n, otherwise bugs in wrap-around
 
 type
   TEventListManager = class;
@@ -139,8 +122,6 @@ begin
 end;
 
 function TEventListManager.GetEventList(Name: widestring): TEventList;
-var
-  n: ansistring;
 begin
   result:=nil;
   (*
@@ -317,8 +298,6 @@ begin
 end;
 
 destructor TChakraEventEntries.Destroy;
-var
-  i: Integer;
 begin
   (*
   if not TBESENInstance(FInstance).ShuttingDown then

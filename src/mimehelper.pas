@@ -1,31 +1,10 @@
 unit mimehelper;
-{
- simple functions to determine a file's mime type.
 
- Todo:
-   OverwriteMimeType should be threadsafe!
-
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
-{$mode delphi}
 
 interface
 
-function GetFileMIMEType(const FileName: String): String;
+function GetFileMIMEType(const FileName: string): string;
 procedure OverwriteMimeType(FileExt: string; const NewType: string);
 
 implementation
@@ -41,10 +20,10 @@ procedure OverwriteMimeType(FileExt: string; const NewType: string);
 begin
   if Pos('.', FileExt)=1 then
     delete(FileExt, 1, 1);
-  MimeTypes.Items[FileExt]:=NewType;
+  MimeTypes.Items[ansistring(FileExt)]:=ansistring(NewType);
 end;
 
-function GetFileMIMEType(const FileName: String): String;
+function GetFileMIMEType(const FileName: string): string;
 var
   ext: String;
 begin
@@ -53,7 +32,7 @@ begin
     delete(ext, 1, 1);
 
   ext:=lowercase(ext);
-  Result := MimeTypes.Items[ext];
+  Result := string(MimeTypes.Items[ansistring(ext)]);
 end;
 
 procedure ReadMimeTypes;
@@ -83,9 +62,9 @@ begin
            begin
              s:=Trim(copy(b, 1, pos(' ', b)));
              Delete(b, 1, Length(s)+1);
-             MimeTypes[s]:=a;
+             MimeTypes[ansistring(s)]:=ansistring(a);
            end;
-           MimeTypes[lowercase(b)]:=a;
+           MimeTypes[lowercase(ansistring(b))]:=ansistring(a);
          end;
        end;
     end;

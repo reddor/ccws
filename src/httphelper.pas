@@ -1,24 +1,7 @@
 unit httphelper;
-{
- helper classes & functions for the http protocol
 
- Copyright (C) 2016 Simon Ley
+{$i ccwssettings.inc}
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
-
-{$mode delphi}
 interface
 
 uses
@@ -32,22 +15,22 @@ type
     FCount: Integer;
     FRequests: array of record
       Name,
-      Value: ansistring;
+      Value: string;
     end;
-    function GetHeader(const index: ansistring): ansistring;
-    function Find(const Name: ansistring): ansistring;
-    procedure SetHeader(const index: ansistring; AValue: ansistring);
+    function GetHeader(const index: string): string;
+    function Find(const Name: string): string;
+    procedure SetHeader(const index: string; AValue: string);
   public
     constructor Create;
     destructor Destroy; override;
-    procedure Add(const Name, Value: ansistring);
+    procedure Add(const Name, Value: string);
     procedure Clear;
-    function Exists(Name: ansistring): Integer;
-    procedure Get(Index: Integer; out Name, Value: ansistring);
-    function Generate: ansistring;
+    function Exists(Name: string): Integer;
+    procedure Get(Index: Integer; out Name, Value: string);
+    function Generate: string;
 
     property Count: Integer read FCount;
-    property Requests[const index: ansistring]: ansistring read GetHeader write SetHeader; default;
+    property Requests[const index: string]: string read GetHeader write SetHeader; default;
   end;
 
   THTTPRangeSegment = record
@@ -59,12 +42,12 @@ type
   { THTTPRequest }
   THTTPRequest = class
   private
-    FAction: ansistring;
+    FAction: string;
     FCookies: THTTPRequestFields;
-    FURL: ansistring;
-    FVersion: ansistring;
+    FURL: string;
+    FVersion: string;
     FHeader: THTTPRequestFields;
-    FParameters: ansistring;
+    FParameters: string;
     FRangeSegments: array of THTTPRangeSegment;
     FPostData: THTTPPostData;
     function GetRangeCount: Integer;
@@ -73,16 +56,16 @@ type
     constructor Create;
     destructor Destroy; override;
     { read from string }
-    function readstr(var str: ansistring): Boolean;
+    function readstr(var str: string): Boolean;
 
-    function Generate: ansistring;
+    function Generate: string;
 
-    function GetCookies(aTimeout: ansistring = ''): ansistring;
+    function GetCookies(aTimeout: string = ''): string;
     property POSTData: THTTPPostData read FPostData;
-    property action: ansistring read FAction write FAction;
-    property version: ansistring read FVersion write FVersion;
-    property url: ansistring read FURL write FURL;
-    property parameters: ansistring read FParameters write FParameters;
+    property action: string read FAction write FAction;
+    property version: string read FVersion write FVersion;
+    property url: string read FURL write FURL;
+    property parameters: string read FParameters write FParameters;
     property header: THTTPRequestFields read FHeader;
     property RangeCount: Integer read GetRangeCount;
     property Range[Index: Integer]: THTTPRangeSegment read GetRangeSegment;
@@ -99,7 +82,7 @@ type
     constructor Create(Request: THTTPRequest);
     destructor Destroy; override;
     procedure Clear;
-    function readstr(var str: ansistring): Boolean;
+    function readstr(var str: string): Boolean;
     property Entities: THTTPRequestFields read FEntities write FEntities;
   end;
 
@@ -107,31 +90,31 @@ type
 
   THTTPReply = class
   private
-    FResponse: ansistring;
-    FVersion: ansistring;
+    FResponse: string;
+    FVersion: string;
     FHeader: THTTPRequestFields;
   public
     constructor Create;
     destructor Destroy; override;
 
-    procedure Clear(Version: ansistring);
+    procedure Clear(Version: string);
 
-    function Build(Response: ansistring): ansistring;
-    function Read(Reply: ansistring): Boolean;
+    function Build(Response: string): string;
+    function Read(Reply: string): Boolean;
     property header: THTTPRequestFields read FHeader;
-    property response: ansistring read FResponse write FResponse;
-    property version: ansistring read FVersion write FVersion;
+    property response: string read FResponse write FResponse;
+    property version: string read FVersion write FVersion;
   end;
 
 
-function FileExistsAndAge(const TheFile: ansistring; out Time: TDateTime): Boolean;
-function FileLastModified(const TheFile: ansistring): TDateTime;
-function DateTimeToHTTPTime(Time: TDateTime): ansistring;
-function HTTPTimeToDateTime(Time: ansistring): TDateTime;
+function FileExistsAndAge(const TheFile: string; out Time: TDateTime): Boolean;
+function FileLastModified(const TheFile: string): TDateTime;
+function DateTimeToHTTPTime(Time: TDateTime): string;
+function HTTPTimeToDateTime(Time: string): TDateTime;
 
-function URLDecode(const Input: ansistring): ansistring;
-function URLPathToAbsolutePath(const Url, BaseDir: ansistring; out Path: ansistring): Boolean;
-procedure GetHTTPStatusCode(ErrorCode: Word; out Title, Description: ansistring);
+function URLDecode(const Input: string): string;
+function URLPathToAbsolutePath(const Url, BaseDir: string; out Path: string): Boolean;
+procedure GetHTTPStatusCode(ErrorCode: Word; out Title, Description: string);
 
 implementation
 
@@ -143,10 +126,10 @@ uses
   DateUtils;
 
 const
-  HexChars: string[16] = '0123456789abcdef';
+  HexChars: string = '0123456789abcdef';
 
 
-procedure GetHTTPStatusCode(ErrorCode: Word; out Title, Description: ansistring);
+procedure GetHTTPStatusCode(ErrorCode: Word; out Title, Description: string);
 begin
   Description:='';
   case ErrorCode of
@@ -355,25 +338,29 @@ begin
 
     else
       begin
-        Title:='Error '+IntToStr(ErrorCode);
+        Title:='Error '+string(IntToStr(ErrorCode));
         Description:='Unknown error code';
       end;
   end;
 end;
 
-function URLDecode(const Input: ansistring): ansistring;
+function URLDecode(const Input: string): string;
 var
   i, j, k: Integer;
 begin
-  result:=StringReplace(Input, '+', ' ', [rfReplaceAll]);
+{$IFDEF CCWS_UNICODE}
+  result:=UnicodeStringReplace(Input, '+', ' ', [rfReplaceAll]);
+{$ELSE CCWS_UNICODE}
+result:=StringReplace(Input, '+', ' ', [rfReplaceAll]);
+{$ENDIF}
   i:=Pos('%', result);
   while (i>0) and (i<=Length(result)-2) do
   begin
-    j:=(Pos(lowerCase(result[i+1]), HexChars)-1);
-    k:=(Pos(lowercase(result[i+2]), HexChars)-1);
+    j:=(Pos(LowerCase(result[i+1]), HexChars)-1);
+    k:=(Pos(LowerCase(result[i+2]), HexChars)-1);
     if(j<0)or(k<0) then
       Break; // invalid url encoding
-    result[i]:=Chr(j*16 + k);
+    result[i]:=Char(j*16 + k);
     Delete(result, i+1, 2);
     i:=Pos('%', result);
   end;
@@ -381,7 +368,7 @@ end;
 
 { returns true if url-path is valid, returns BaseDir + Url. returns false if
   url path is invalid (e.g. "/../../etc/passwd") }
-function URLPathToAbsolutePath(const Url, BaseDir: ansistring; out Path: ansistring): Boolean;
+function URLPathToAbsolutePath(const Url, BaseDir: string; out Path: string): Boolean;
 var
   s: string;
   i, j: Integer;
@@ -409,7 +396,7 @@ begin
   result:=True;
 end;
 
-function GetElementFromString(const Str, Element: ansistring): string;
+function GetElementFromString(const Str, Element: string): string;
 var
   i, j, k: Integer;
   isQuoted: Boolean;
@@ -452,7 +439,7 @@ begin
 end;
 
 {$IFDEF MSWINDOWS}
-function FileLastModified(const TheFile: ansistring): TDateTime;
+function FileLastModified(const TheFile: string): TDateTime;
 var
   FileH : THandle;
   LocalFT : TFileTime;
@@ -476,14 +463,14 @@ begin
   end;
 end;
 {$ELSE}
-function FileLastModified(const TheFile: ansistring): TDateTime;
+function FileLastModified(const TheFile: string): TDateTime;
 begin
   result := FileDateToDateTime(FileAge(TheFile));
 end;
 {$ENDIF}
 
 { 2 birds with one stone: check if file exists and return file size if so }
-function FileExistsAndAge(const TheFile: ansistring; out Time: TDateTime): Boolean;
+function FileExistsAndAge(const TheFile: string; out Time: TDateTime): Boolean;
 var
   x: longint;
 begin
@@ -497,7 +484,7 @@ begin
   Time:=FileDateToDateTime(x);
 end;
 
-function DateTimeToHTTPTime(Time: TDateTime): ansistring;
+function DateTimeToHTTPTime(Time: TDateTime): string;
 const
   Days: array[1..7] of string = ('Mon','Tue','Wed','Thu', 'Fri', 'Sat', 'Sun');
   Months: array[1..12] of string = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -508,20 +495,20 @@ var
   function LeadingZero(const Input: Word): string;
   begin
     if (Input<10) then
-      result := '0'+IntToStr(Input)
+      result := '0'+string(IntToStr(Input))
     else
-      Result := IntToStr(Input);
+      Result := string(IntToStr(Input));
   end;
 
 begin
   DecodeDateTime(Time, year, month, day, hour, minute, second, ms);
 
-  result := ansistring( Days[DayOfTheWeek(Time)]+', ' + LeadingZero(Day)+' '+
-            Months[month] + ' ' + IntToStr(year)+' '+
+  result := string( Days[DayOfTheWeek(Time)]+', ' + LeadingZero(Day)+' '+
+            Months[month] + ' ' + string(IntToStr(year))+' '+
             LeadingZero(hour)+':'+LeadingZero(minute)+':'+LeadingZero(second)+' GMT' );
 end;
 
-function HTTPTimeToDateTime(Time: ansistring): TDateTime;
+function HTTPTimeToDateTime(Time: string): TDateTime;
 const
   Months = 'JanFebMarAprMayJunJulAugSepOctNovDec';
 
@@ -536,19 +523,19 @@ var
     i := curPos + 1;
     while (i < length(Time)) and (Time[i]<>' ') and (Time[i]<>':') do
       inc(i);
-    Result := Copy(string(Time), curPos+1, (i - curPos - 1));
+    Result := Copy(Time, curPos+1, (i - curPos - 1));
     curPos := i;
   end;
 
 begin
-  curPos := pos(ansistring(', '), Time)+1;
+  curPos := pos(', ', Time)+1;
 
-  day := StrToIntDef(GetValue, 1);
-  month := 1 + pos(GetValue, Months) div 3;
-  year := StrToIntDef(GetValue, 1985);
-  hour := StrToIntDef(GetValue, 12);
-  minute := StrToIntDef(GetValue, 0);
-  second := StrToIntDef(GetValue, 12);
+  day := StrToIntDef(AnsiString(GetValue), 1);
+  month := 1 + pos(AnsiString(GetValue), Months) div 3;
+  year := StrToIntDef(AnsiString(GetValue), 1985);
+  hour := StrToIntDef(AnsiString(GetValue), 12);
+  minute := StrToIntDef(AnsiString(GetValue), 0);
+  second := StrToIntDef(AnsiString(GetValue), 12);
 
   Result := EncodeDateTime(year, month, day, hour, minute, second, 0)
 end;
@@ -566,7 +553,7 @@ end; }
 
 { THTTPRequestFields }
 
-procedure THTTPRequestFields.Add(const Name, Value: ansistring);
+procedure THTTPRequestFields.Add(const Name, Value: string);
 var
   i: Integer;
 begin
@@ -591,7 +578,7 @@ begin
   SetLength(FRequests, 16);
 end;
 
-function THTTPRequestFields.Find(const Name: ansistring): ansistring;
+function THTTPRequestFields.Find(const Name: string): string;
 var
   i: Integer;
 begin
@@ -605,8 +592,8 @@ begin
   result := '';
 end;
 
-procedure THTTPRequestFields.SetHeader(const index: ansistring;
-  AValue: ansistring);
+procedure THTTPRequestFields.SetHeader(const index: string;
+  AValue: string);
 begin
   Add(Index, AValue);
 end;
@@ -622,12 +609,12 @@ begin
   inherited Destroy;
 end;
 
-function THTTPRequestFields.GetHeader(const index: ansistring): ansistring;
+function THTTPRequestFields.GetHeader(const index: string): string;
 begin
   result := Find(index);
 end;
 
-procedure THTTPRequestFields.Get(Index: Integer; out Name, Value: ansistring);
+procedure THTTPRequestFields.Get(Index: Integer; out Name, Value: string);
 begin
   if (Index<0)or(Index>=FCount) then
     Exit;
@@ -636,7 +623,7 @@ begin
   Value := FRequests[Index].Value;
 end;
 
-function THTTPRequestFields.Generate: ansistring;
+function THTTPRequestFields.Generate: string;
 var
   i: Integer;
 begin
@@ -649,7 +636,7 @@ begin
     result:=result + #13#10 + FRequests[i].Name + ': '+ FRequests[i].Value;
 end;
 
-function THTTPRequestFields.Exists(Name: ansistring): Integer;
+function THTTPRequestFields.Exists(Name: string): Integer;
 var
   i: Integer;
 begin
@@ -682,10 +669,10 @@ begin
   inherited;
 end;
 
-function THTTPRequest.readstr(var str: ansistring): Boolean;
+function THTTPRequest.readstr(var str: string): Boolean;
 var strpos: Integer;
 
-  function getLine: ansistring;
+  function getLine: string;
   var i: integer;
   begin
     if strpos<1 then strpos:=1;
@@ -807,15 +794,15 @@ begin
         repeat
           i := Length(FRangeSegments);
           setlength(FRangeSegments, i + 1);
-          FRangeSegments[i].min := StrToInt(Copy(s, 1, pos('-', s)-1));
+          FRangeSegments[i].min := StrToInt(AnsiString(Copy(s, 1, pos('-', s)-1)));
           Delete(s, 1, pos('-', s));
           if pos(',', s)>0 then
           begin
-            FRangeSegments[i].max := StrToInt(Copy(s, 1, pos(',', s)-1));
+            FRangeSegments[i].max := StrToInt(AnsiString(Copy(s, 1, pos(',', s)-1)));
             Delete(s, 1, pos(',', s));
           end else
           begin
-            FRangeSegments[i].max := StrToInt(s);
+            FRangeSegments[i].max := StrToInt(AnsiString(s));
             Break;
           end;
         until s = '';
@@ -832,7 +819,7 @@ begin
   end;
 end;
 
-function THTTPRequest.Generate: ansistring;
+function THTTPRequest.Generate: string;
 begin
   result:=FAction + ' ' + FURL;
 
@@ -861,9 +848,9 @@ begin
   end;
 end;
 
-function THTTPRequest.GetCookies(aTimeout: ansistring): ansistring;
+function THTTPRequest.GetCookies(aTimeout: string): string;
 var i: Integer;
-    name, val: ansistring;
+    name, val: string;
 begin
   result:='';
   if aTimeout<>'' then
@@ -881,11 +868,11 @@ end;
 
 { THTTPReply }
 
-function THTTPReply.Build(Response: ansistring): ansistring;
+function THTTPReply.Build(Response: string): string;
 var
   i, Len: Integer;
 
-procedure AddStr(const str: ansistring);
+procedure AddStr(const str: string);
 var
   l: Integer;
 begin
@@ -915,11 +902,11 @@ begin
   AddStr(#13#10);
 end;
 
-function THTTPReply.Read(Reply: ansistring): Boolean;
+function THTTPReply.Read(Reply: string): Boolean;
 var
-  s: ansistring;
+  s: string;
   i: Integer;
-  function GetLine: ansistring;
+  function GetLine: string;
   var
     i: Integer;
   begin
@@ -956,7 +943,7 @@ begin
   result:=True;
 end;
 
-procedure THTTPReply.Clear(Version: ansistring);
+procedure THTTPReply.Clear(Version: string);
 begin
   FHeader.Clear;
   FVersion := Version;  
@@ -981,12 +968,12 @@ begin
   FEntities.Clear;
 end;
 
-function THTTPPostData.readstr(var str: ansistring): Boolean;
+function THTTPPostData.readstr(var str: string): Boolean;
 var
   len, i, j: Integer;
   boundary, s, s2, filename, dataname: string;
 begin
-  len := StrToIntDef(FRequest.header['Content-Length'], 0);
+  len := StrToIntDef(AnsiString(FRequest.header['Content-Length']), 0);
   s := FRequest.header['Content-Type'];
   result:=False;
 
@@ -1061,5 +1048,9 @@ begin
   FEntities.Free;
   inherited;
 end;
+
+initialization
+
+finalization
 
 end.

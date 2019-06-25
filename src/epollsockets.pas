@@ -1,22 +1,4 @@
 unit epollsockets;
-{
- an abstraction layer for handling sockets with epoll
-
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 
 {$i ccwssettings.inc}
 
@@ -51,12 +33,12 @@ type
 
   TEPollSocket = class
   private
-    FOutbuffer: ansistring;
-    FOutbuffer2: ansistring;
+    FOutbuffer: string;
+    FOutbuffer2: string;
     FonDisconnect: TEPollSocketEvent;
     FParent: TEpollWorkerThread;
     FSocket: TSocket;
-    FRemoteIP, FRemoteIPPort: ansistring;
+    FRemoteIP, FRemoteIPPort: string;
     FWantClose: Boolean;
     FIsSSL: Boolean;
     FSSLContext: TAbstractSSLContext;
@@ -67,7 +49,7 @@ type
     function GetClosed: Boolean;
   protected
     { process incoming data - called by worker thread, has to be overridden }
-    procedure ProcessData(const Data: ansistring); overload; virtual;
+    procedure ProcessData(const Data: string); overload; virtual;
     { if this function is overriden, the other ProcessData(string) function won't be called unless inherited form is called }
     procedure ProcessData(const Buffer: Pointer; BufferLength: Integer); overload; virtual;
     { reads up to Length(Data) bytes from socket - called by worker thread.
@@ -107,7 +89,7 @@ type
     function GetRemoteIP: string;
     { send data - if flush is true, data will be immediately written to the
       socket, or stored until FlushSendbuffer is called }
-    procedure SendRaw(const Data: ansistring; Flush: Boolean = True); overload;
+    procedure SendRaw(const Data: string; Flush: Boolean = True); overload;
     procedure SendRaw(const Data: Pointer; DataSize: Integer; Flush: Boolean = True); overload;
     { performs ssl handshake }
     procedure StartSSL;
@@ -221,7 +203,7 @@ begin
 
   if epoll_ctl(FParent.epollfd, EPOLL_CTL_ADD, Handle, @event)<0 then
   begin
-    dolog(llDebug, 'epoll_ctl_add failed, error #'+IntTostr(fpgeterrno)+' '+IntToStr(Handle));
+    dolog(llDebug, 'epoll_ctl_add failed, error #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(Handle)));
   end else
   begin
     i:=Length(FHandles);
@@ -240,7 +222,7 @@ begin
       FHandles[i]:=FHandles[Length(FHandles)-1];
       Setlength(FHandles, Length(FHandles)-1);
       if epoll_ctl(FParent.epollfd, EPOLL_CTL_DEL, Handle, nil)<0 then
-        dolog(llError, 'Custom epoll_ctl_del failed #'+IntToStr(fpgeterrno)+' '+IntToStr(Handle));
+        dolog(llError, 'Custom epoll_ctl_del failed #'+string(IntToStr(fpgeterrno))+' '+string(IntToStr(Handle)));
       Exit;
     end;
 end;
@@ -290,7 +272,7 @@ begin
   result:=(FSocket = INVALID_SOCKET) or WantClose;
 end;
 
-procedure TEPollSocket.ProcessData(const Data: ansistring);
+procedure TEPollSocket.ProcessData(const Data: string);
 begin
 
 end;
@@ -298,7 +280,7 @@ end;
 procedure TEPollSocket.ProcessData(const Buffer: Pointer; BufferLength: Integer
   );
 var
-  Temp: ansistring;
+  Temp: string;
 begin
   Setlength(Temp,BufferLength);
   Move(Buffer^, Temp[1], BufferLength);
@@ -307,7 +289,7 @@ begin
 end;
 
 
-procedure TEPollSocket.SendRaw(const Data: ansistring; Flush: Boolean);
+procedure TEPollSocket.SendRaw(const Data: string; Flush: Boolean);
 begin
   if FWantClose then
     Exit;
@@ -383,7 +365,7 @@ begin
         end;
         else
         begin
-          dolog(llDebug, GetPeerName+': error in fprecv #'+IntTostr(err));
+          dolog(llDebug, GetPeerName+': error in fprecv #'+string(IntTostr(err)));
           result:=False;
           FWantClose:=True;
         end;
@@ -437,7 +419,7 @@ begin
       if i=0 then
       begin
         // I don't think that should ever happen according to manpages
-        dolog(llDebug, GetPeerName+': fpsend Could not send anything, #'+IntTostr(fpgeterrno)+' '+IntToStr(i));
+        dolog(llDebug, GetPeerName+': fpsend Could not send anything, #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(i)));
       end else
       if i<0 then
       begin
@@ -461,7 +443,7 @@ begin
           // I don't think that should ever happen according to manpages
           else begin
             // unknown error, log
-            dolog(llError, GetPeerName+': Error in fpsend #'+IntTostr(err)+' '+IntToStr(i));
+            dolog(llError, GetPeerName+': Error in fpsend #'+string(IntTostr(err))+' '+string(IntToStr(i)));
             FWantclose:=True;
             i:=-1;
           end;
@@ -481,7 +463,7 @@ begin
       event.Events:=EPOLLIN or EPOLLOUT;
       event.Data.ptr:=Self;
       if epoll_ctl(FParent.epollfd, EPOLL_CTL_MOD, FSocket, @event)<0 then
-        dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin+epollout), error #'+IntTostr(fpgeterrno));
+        dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin+epollout), error #'+string(IntTostr(fpgeterrno)));
     end else
     if (Length(FOutbuffer)=0)and(Length(FOutbuffer2)>0) then
     begin
@@ -494,7 +476,7 @@ begin
    event.Events:=EPOLLIN;
    event.Data.ptr:=Self;
    if epoll_ctl(FParent.epollfd, EPOLL_CTL_MOD, FSocket, @event)<0 then
-     dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin), error #'+IntTostr(fpgeterrno));
+     dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin), error #'+string(IntTostr(fpgeterrno)));
   end;
 end;
 
@@ -516,8 +498,8 @@ begin
       len := SizeOf(name);
       FillChar(name, len, 0);
       fpGetPeerName(FSocket, @name, @Len);
-      FRemoteIP:=GetSinIP(Name);
-      FRemoteIPPort:=FRemoteIP+'.'+IntToStr(GetSinPort(Name));
+      FRemoteIP:=string(GetSinIP(Name));
+      FRemoteIPPort:=FRemoteIP+'.'+string(IntToStr(GetSinPort(Name)));
       result:=FRemoteIPPort;
     end;
   end;
@@ -633,7 +615,7 @@ begin
   fpfcntl(FPipeOutput, F_SetFl, fpfcntl(FPipeOutput, F_GetFl) or O_NONBLOCK);
   if epoll_ctl(epollfd, EPOLL_CTL_ADD, FPipeOutput, @event)<0 then
   begin
-    dolog(llError, 'epoll_ctl_add pipe failed, error #'+IntTostr(fpgeterrno)+' ');
+    dolog(llError, 'epoll_ctl_add pipe failed, error #'+string(IntTostr(fpgeterrno))+' ');
   end;
 
   GetMem(Data, InternalBufferSize);
@@ -690,11 +672,11 @@ begin
         conn.FlushSendbuffer;
       end else if (FEpollEvents[j].Events and EPOLLERR<>0) then
       begin
-        dolog(llDebug, 'got epoll-error '+Inttostr(fpgeterrno));
+        dolog(llDebug, 'got epoll-error '+string(Inttostr(fpgeterrno)));
         conn.FWantclose:=True;
       end else
       begin
-        dolog(llDebug, 'unknown epoll-event '+IntToStr(FEpollEvents[j].Events));
+        dolog(llDebug, 'unknown epoll-event '+string(IntToStr(FEpollEvents[j].Events)));
         conn.FWantclose:=True;
       end;
 
@@ -717,7 +699,7 @@ begin
   except
     on E: Exception do
     begin
-      dolog(llFatal, 'Epoll-thread died with unhandled exception: '+e.Message);
+      dolog(llFatal, 'Epoll-thread died with unhandled exception: '+string(e.Message));
       dolog(llFatal, 'You should probably restart the server now');
     end;
   end;
@@ -739,7 +721,7 @@ begin
   if FSockets[i] = Sock then
   begin
     if epoll_ctl(epollfd, EPOLL_CTL_DEL, FSockets[i].Socket, nil)<0 then
-      dolog(llError, 'epoll_ctl_del failed #'+IntToStr(fpgeterrno));
+      dolog(llError, 'epoll_ctl_del failed #'+string(IntToStr(fpgeterrno)));
 
     sock.FParent:=nil;
 
@@ -840,7 +822,7 @@ begin
 
   if epoll_ctl(epollfd, EPOLL_CTL_ADD, Sock.Socket, @event)<0 then
   begin
-    dolog(llDebug, 'epoll_ctl_add failed, error #'+IntTostr(fpgeterrno)+' '+IntToStr(Sock.FSocket));
+    dolog(llDebug, 'epoll_ctl_add failed, error #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(Sock.FSocket)));
     result:=False;
   end else
   begin

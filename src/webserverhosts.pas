@@ -1,24 +1,5 @@
 unit webserverhosts;
-{
- managment classes for sites
 
- a "site" in besenws terminology describes a single website with all data and scripts.
-
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -45,43 +26,43 @@ type
   TWebserverSite = class
   private
     FCS: TCriticalSection;
-    FName, FPath: UnicodeString;
+    FName, FPath: string;
     FParent: TWebserverSiteManager;
     FCustomHandlers: TFPObjectHashTable;
     FScriptDirs: array of record
-      Dir: UnicodeString;
-      Script: UnicodeString;
+      Dir: string;
+      Script: string;
     end;
     FResponseHeaders: array of record
-      Name: UnicodeString;
-      Value: UnicodeString;
+      Name: string;
+      Value: string;
     end;
-    FIndexNames: array of UnicodeString;
-    FWhitelistedProcesses: array of UnicodeString;
+    FIndexNames: array of string;
+    FWhitelistedProcesses: array of string;
     FForwards: TFPStringHashTable;
-    FCustomStatusPages: array[CustomStatusPageMin..CustomStatusPageMax] of UnicodeString;
-    procedure ClearItem(Item: TObject; const Key: AnsiString; var Continue: Boolean);
+    FCustomStatusPages: array[CustomStatusPageMin..CustomStatusPageMax] of string;
+    procedure ClearItem(Item: TObject; const Key: ansistring; var Continue: Boolean);
   public
-    constructor Create(Parent: TWebserverSiteManager; Path: UnicodeString);
+    constructor Create(Parent: TWebserverSiteManager; Path: string);
     destructor Destroy; override;
-    procedure log(Level: TLoglevel; Msg: UnicodeString);
-    procedure AddScriptDirectory(directory, filename: UnicodeString);
-    procedure AddForward(target, NewTarget: UnicodeString);
-    procedure AddIndexPage(name: UnicodeString);
-    function IsScriptDir(target: UnicodeString; out Script, Params: UnicodeString): Boolean;
-    function IsForward(target: UnicodeString; out NewTarget: UnicodeString): Boolean;
-    procedure AddResponseHeader(const name, value: UnicodeString);
-    procedure AddHostAlias(HostName: UnicodeString);
-    procedure AddCustomHandler(url: UnicodeString; Handler: TEpollWorkerThread);
-    procedure AddCustomStatusPage(StatusCode: Word; URI: UnicodeString);
+    procedure log(Level: TLoglevel; Msg: string);
+    procedure AddScriptDirectory(directory, filename: string);
+    procedure AddForward(target, NewTarget: string);
+    procedure AddIndexPage(name: string);
+    function IsScriptDir(target: string; out Script, Params: string): Boolean;
+    function IsForward(target: string; out NewTarget: string): Boolean;
+    procedure AddResponseHeader(const name, value: string);
+    procedure AddHostAlias(HostName: string);
+    procedure AddCustomHandler(url: string; Handler: TEpollWorkerThread);
+    procedure AddCustomStatusPage(StatusCode: Word; URI: string);
     procedure ApplyResponseHeader(const Response: THTTPReply);
-    procedure AddWhiteListProcess(const Executable: UnicodeString);
-    function IsProcessWhitelisted(const Executable: UnicodeString): Boolean;
-    function GetCustomStatusPage(StatusCode: Word): UnicodeString;
-    function GetCustomHandler(url: UnicodeString): TEpollWorkerThread;
-    function GetIndexPage(var target: UnicodeString): UnicodeString;
-    property Path: UnicodeString read FPath;
-    property Name: UnicodeString read FName;
+    procedure AddWhiteListProcess(const Executable: string);
+    function IsProcessWhitelisted(const Executable: string): Boolean;
+    function GetCustomStatusPage(StatusCode: Word): string;
+    function GetCustomHandler(url: string): TEpollWorkerThread;
+    function GetIndexPage(var target: string): string;
+    property Path: string read FPath;
+    property Name: string read FName;
     property Parent: TWebserverSiteManager read FParent;
   end;
 
@@ -92,22 +73,22 @@ type
     FDefaultHost: TWebserverSite;
     FHosts: array of TWebserverSite;
     FHostsByName: TFPObjectHashTable;
-    FPath: UnicodeString;
-    FSharedScriptsDir: UnicodeString;
+    FPath: string;
+    FSharedScriptsDir: string;
     FHostToDelete: TWebserverSite;
-    Procedure HostNameDeleteIterator(Item: TObject; const Key: AnsiString; var Continue: Boolean);
+    Procedure HostNameDeleteIterator(Item: TObject; const Key: ansistring; var Continue: Boolean);
   public
-    constructor Create(const BasePath: UnicodeString);
+    constructor Create(const BasePath: string);
     destructor Destroy; override;
-    function UnloadSite(Path: UnicodeString): Boolean;
-    function AddSite(Path: UnicodeString): TWebserverSite;
-    function GetSite(Hostname: UnicodeString): TWebserverSite;
-    property Path: UnicodeString read FPath;
+    function UnloadSite(Path: string): Boolean;
+    function AddSite(Path: string): TWebserverSite;
+    function GetSite(Hostname: string): TWebserverSite;
+    property Path: string read FPath;
     property DefaultHost: TWebserverSite read FDefaultHost write FDefaultHost;
   end;
 
 
-function IntToFilesize(Size: longword): UnicodeString;
+function IntToFilesize(Size: longword): string;
 
 implementation
 
@@ -115,7 +96,7 @@ uses
   webserver,
   chakraserverconfig;
 
-function FileToStr(const aFilename: UnicodeString): UnicodeString;
+function FileToStr(const aFilename: string): string;
 var
   f: File;
 begin
@@ -130,7 +111,7 @@ begin
     result:='{}';
 end;
 
-procedure WriteFile(const aFilename, aContent: UnicodeString);
+procedure WriteFile(const aFilename, aContent: string);
 var
   f: file;
 begin
@@ -147,14 +128,14 @@ end;
 
 { TWebserverSite }
 
-procedure TWebserverSite.ClearItem(Item: TObject; const Key: AnsiString;
+procedure TWebserverSite.ClearItem(Item: TObject; const Key: ansistring;
   var Continue: Boolean);
 begin
   Item.free;
 end;
 
 constructor TWebserverSite.Create(Parent: TWebserverSiteManager;
-  Path: UnicodeString);
+  Path: string);
 begin
   FCS:=TCriticalSection.Create;
   FForwards:=TFPStringHashTable.Create;
@@ -179,18 +160,18 @@ begin
   inherited Destroy;
 end;
 
-procedure TWebserverSite.log(Level: TLoglevel; Msg: UnicodeString);
+procedure TWebserverSite.log(Level: TLoglevel; Msg: string);
 begin
   dolog(Level, '['+FName+'] '+Msg);
 end;
 
-function IntToFilesize(Size: longword): UnicodeString;
+function IntToFilesize(Size: longword): string;
 
-function Foo(A: longword): UnicodeString;
+function Foo(A: longword): string;
 var
   b: longword;
 begin
-  result:=IntToStr(Size div A);
+  result:=string(IntToStr(Size div A));
 
   if a=1 then
     Exit;
@@ -199,9 +180,9 @@ begin
   b:=(b*100) div 1024;
 
   if b<10 then
-    result:=result+'.0'+IntToStr(b)
+    result:=result+'.0'+string(IntToStr(b))
   else
-    result:=result+'.'+IntTOStr(b);
+    result:=result+'.'+string(IntToStr(b));
 end;
 
 begin
@@ -215,7 +196,7 @@ begin
     result:=Foo(102*1024*1024) + ' gB';
 end;
 
-procedure TWebserverSite.AddScriptDirectory(directory, filename: UnicodeString);
+procedure TWebserverSite.AddScriptDirectory(directory, filename: string);
 var
   i: Integer;
 begin
@@ -225,12 +206,12 @@ begin
   FScriptDirs[i].dir:=directory;
 end;
 
-procedure TWebserverSite.AddForward(target, NewTarget: UnicodeString);
+procedure TWebserverSite.AddForward(target, NewTarget: string);
 begin
-  FForwards[target]:=NewTarget;
+  FForwards[ansistring(target)]:=ansistring(NewTarget);
 end;
 
-procedure TWebserverSite.AddIndexPage(name: UnicodeString);
+procedure TWebserverSite.AddIndexPage(name: string);
 var
   i: Integer;
 begin
@@ -239,7 +220,7 @@ begin
   FIndexNames[i]:=name;
 end;
 
-function TWebserverSite.IsScriptDir(target: UnicodeString; out Script, Params: UnicodeString
+function TWebserverSite.IsScriptDir(target: string; out Script, Params: string
   ): Boolean;
 var
   i: Integer;
@@ -255,14 +236,14 @@ begin
   end;
 end;
 
-function TWebserverSite.IsForward(target: UnicodeString; out NewTarget: UnicodeString
+function TWebserverSite.IsForward(target: string; out NewTarget: string
   ): Boolean;
 begin
-  NewTarget:=FForwards[target];
+  NewTarget:=string(FForwards[ansistring(target)]);
   result:=NewTarget<>'';
 end;
 
-procedure TWebserverSite.AddResponseHeader(const name, value: UnicodeString);
+procedure TWebserverSite.AddResponseHeader(const name, value: string);
 var
   i: Integer;
   add:Boolean;
@@ -294,18 +275,18 @@ begin
   end;
 end;
 
-procedure TWebserverSite.AddHostAlias(HostName: UnicodeString);
+procedure TWebserverSite.AddHostAlias(HostName: string);
 begin
-  FParent.FHostsByName.Add(HostName, Self);
+  FParent.FHostsByName.Add(ansistring(HostName), Self);
 end;
 
-procedure TWebserverSite.AddCustomHandler(url: UnicodeString;
+procedure TWebserverSite.AddCustomHandler(url: string;
   Handler: TEpollWorkerThread);
 begin
-  FCustomHandlers.Add(url, Handler);
+  FCustomHandlers.Add(ansistring(url), Handler);
 end;
 
-procedure TWebserverSite.AddCustomStatusPage(StatusCode: Word; URI: UnicodeString);
+procedure TWebserverSite.AddCustomStatusPage(StatusCode: Word; URI: string);
 begin
   if (StatusCode>=CustomStatusPageMin)and
      (StatusCode<=CustomStatusPageMax) then
@@ -325,7 +306,7 @@ begin
   end;
 end;
 
-procedure TWebserverSite.AddWhiteListProcess(const Executable: UnicodeString);
+procedure TWebserverSite.AddWhiteListProcess(const Executable: string);
 var
   i: Integer;
 begin
@@ -334,7 +315,7 @@ begin
   FWhitelistedProcesses[i]:=Executable;
 end;
 
-function TWebserverSite.IsProcessWhitelisted(const Executable: UnicodeString
+function TWebserverSite.IsProcessWhitelisted(const Executable: string
   ): Boolean;
 var
   i: Integer;
@@ -348,7 +329,7 @@ begin
   end;
 end;
 
-function TWebserverSite.GetCustomStatusPage(StatusCode: Word): UnicodeString;
+function TWebserverSite.GetCustomStatusPage(StatusCode: Word): string;
 begin
   if (StatusCode>=CustomStatusPageMin)and
      (StatusCode<=CustomStatusPageMax) then
@@ -357,42 +338,42 @@ begin
     result:='';
 end;
 
-function TWebserverSite.GetCustomHandler(url: UnicodeString): TEpollWorkerThread;
+function TWebserverSite.GetCustomHandler(url: string): TEpollWorkerThread;
 begin
-  result:=TEpollWorkerThread(FCustomHandlers[url]);
+  result:=TEpollWorkerThread(FCustomHandlers[ansistring(url)]);
 end;
 
-function TWebserverSite.GetIndexPage(var target: UnicodeString): UnicodeString;
+function TWebserverSite.GetIndexPage(var target: string): string;
 var
   i: Integer;
-  s: ansiString;
 begin
   for i:=Length(FIndexNames)-1 downto 0 do
   begin
-    if not URLPathToAbsolutePath(target, FPath + 'web', s) then
+    if not URLPathToAbsolutePath(target, FPath + 'web', result) then
       continue;
-    result:=s + FIndexNames[i];
     if FileExists(result) then
+    begin
+      result:=result + FIndexNames[i];
       Exit;
+    end;
   end;
-  result:='';
 end;
 
 { TWebserverSiteManager }
 
 procedure TWebserverSiteManager.HostNameDeleteIterator(Item: TObject;
-  const Key: AnsiString; var Continue: Boolean);
+  const Key: ansistring; var Continue: Boolean);
 begin
   if Item = FHostToDelete then
   begin
     Continue:=False;
     FHostToDelete:=nil;
-    FHostsByName.Delete(key);
+    FHostsByName.Delete(ansistring(key));
   end else
     Continue:=True;
 end;
 
-constructor TWebserverSiteManager.Create(const BasePath: UnicodeString);
+constructor TWebserverSiteManager.Create(const BasePath: string);
 begin
   FPath:=BasePath+'sites/';
   FSharedScriptsDir:=BasePath+'shared/scripts/';
@@ -413,7 +394,7 @@ begin
   inherited Destroy;
 end;
 
-function TWebserverSiteManager.UnloadSite(Path: UnicodeString): Boolean;
+function TWebserverSiteManager.UnloadSite(Path: string): Boolean;
 var
   i: Integer;
 begin
@@ -437,7 +418,7 @@ begin
   end;
 end;
 
-function TWebserverSiteManager.AddSite(Path: UnicodeString): TWebserverSite;
+function TWebserverSiteManager.AddSite(Path: string): TWebserverSite;
 var
   i: Integer;
 begin
@@ -455,9 +436,9 @@ begin
   // result.AddHostAlias(Hostname);
 end;
 
-function TWebserverSiteManager.GetSite(Hostname: UnicodeString): TWebserverSite;
+function TWebserverSiteManager.GetSite(Hostname: string): TWebserverSite;
 begin
-  result:=TWebserverSite(FHostsByName[Hostname]);
+  result:=TWebserverSite(FHostsByName[ansistring(Hostname)]);
   if not Assigned(result) then
     result:=FDefaultHost;
 end;

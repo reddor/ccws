@@ -1,6 +1,6 @@
 unit chakraprocess;
 
-{$mode delphi}
+{$i ccwssettings.inc}
 
 interface
 
@@ -40,8 +40,8 @@ type
     FHasTerminated: Boolean;
     //FOnData: TBESENObjectFunction;
     //FOnTerminate: TBESENObjectFunction;
-    FParentThread: TEpollWorkerThread;
-    FParentSite: TWebserverSite;
+    //FParentThread: TEpollWorkerThread;
+    //FParentSite: TWebserverSite;
     FProcess: TProcess;
     FDataHandler: TChakraProcessDataHandler;
   protected
@@ -74,8 +74,8 @@ uses
 { TChakraProcessDataHandler }
 
 procedure TChakraProcessDataHandler.DataReady(Event: epoll_event);
-var
-  buf: ansistring;
+//var
+//  buf: ansistring;
 //  AResult, AArg: TBESENValue;
 //  Arg: PBESENValue;
 
@@ -198,7 +198,7 @@ begin
     if FHasTerminated then
       Exit;
 
-    dolog(llDebug, 'Terminating process '+FProcess.Executable);
+    dolog(llDebug, 'Terminating process '+string(FProcess.Executable));
     FProcess.Terminate(0);
     FHasTerminated:=True;
 

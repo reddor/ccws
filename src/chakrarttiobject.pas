@@ -592,7 +592,7 @@ var
   Name: UnicodeString;
 begin
   inherited RegisterMethods(AInstance);
-  MethodTable := pointer({%H-}pointer(ptrint({%H-}ptrint(pointer(self)) +
+  MethodTable := pointer({%H-}pointer(ptruint({%H-}ptruint(pointer(self)) +
     vmtMethodTable))^);
   if assigned(MethodTable) then
   begin

@@ -1,6 +1,6 @@
 unit xmlhttprequest;
 
-{$mode delphi}
+{$i ccwssettings.inc}
 
 interface
 
@@ -23,19 +23,19 @@ type
     FRequest: THTTPRequestThread;
     FOnReadyStateChange: JsValueRef;
     FReadyState: longword;
-    FResponse: UnicodeString;
+    FResponse: string;
     FStatus: longword;
-    FStatusText: UnicodeString;
+    FStatusText: string;
     FSynchronous: boolean;
     FTimeout: longword;
     procedure RequestError(Sender: TObject; {%H-}ErrorType: THTTPRequestError;
-      const Message: ansistring);
-    procedure RequestResponse(Sender: TObject; const ResponseCode, Data: ansistring);
-    function RequestForward(Sender: TObject; var {%H-}newUrl: ansistring): boolean;
+      const Message: string);
+    procedure RequestResponse(Sender: TObject; const ResponseCode, Data: string);
+    function RequestForward(Sender: TObject; var {%H-}newUrl: string): boolean;
     function RequestSent(Sender: TObject; {%H-}Socket: TTCPBlockSocket): boolean;
     function RequestHeadersReceived(Sender: TObject): boolean;
     function RequestLoading(Sender: TObject): boolean;
-    function RequestConnect(Sender: TObject; {%H-}Host, {%H-}Port: ansistring): boolean;
+    function RequestConnect(Sender: TObject; {%H-}Host, {%H-}Port: string): boolean;
   protected
     procedure DoFire(Func: TCallbackProc);
     procedure FireError;
@@ -46,7 +46,7 @@ type
     procedure FireReadyChangeDone;
 
     //procedure InitializeObject; override;
-    function DoConnect(Method, Url: ansistring): boolean;
+    function DoConnect(Method, Url: string): boolean;
   public
     constructor Create(Args: PJsValueRef = nil; ArgCount: Word = 0; AFinalize: Boolean = False); override;
     destructor Destroy; override;
@@ -61,10 +61,10 @@ type
     function getResponseHeader(Args: PJsValueRef; ArgCount: word): JsValueRef;
 
     property readyState: longword read FReadyState;
-    property response: UnicodeString read FResponse;
-    property responseText: UnicodeString read FResponse;
+    property response: string read FResponse;
+    property responseText: string read FResponse;
     property status: longword read FStatus;
-    property statusText: UnicodeString read FStatusText;
+    property statusText: string read FStatusText;
     property timeout: longword read FTimeout write FTimeout;
     property synchronous: boolean read FSynchronous write FSynchronous;
   end;
@@ -77,20 +77,20 @@ uses
 { TXMLHttpRequest }
 
 
-function TXMLHttpRequest.DoConnect(Method, Url: ansistring): boolean;
+function TXMLHttpRequest.DoConnect(Method, Url: string): boolean;
 begin
   Result := False;
   if Assigned(FRequest) then
     Exit;
 
   FRequest := THTTPRequestThread.Create(Method, url, True);
-  FRequest.OnError := RequestError;
-  FRequest.OnForward := RequestForward;
-  FRequest.OnResponse := RequestResponse;
-  FRequest.OnRequestSent := RequestSent;
-  FRequest.OnHeadersReceived := RequestHeadersReceived;
-  FRequest.OnLoading := RequestLoading;
-  FRequest.OnConnect := RequestConnect;
+  FRequest.OnError := @RequestError;
+  FRequest.OnForward := @RequestForward;
+  FRequest.OnResponse := @RequestResponse;
+  FRequest.OnRequestSent := @RequestSent;
+  FRequest.OnHeadersReceived := @RequestHeadersReceived;
+  FRequest.OnLoading := @RequestLoading;
+  FRequest.OnConnect := @RequestConnect;
 
   FTimeout := Round(JsNumberToDouble(JsGetProperty(Instance, 'timeout')));
 
@@ -128,23 +128,23 @@ begin
 end;
 
 procedure TXMLHttpRequest.RequestError(Sender: TObject;
-  ErrorType: THTTPRequestError; const Message: ansistring);
+  ErrorType: THTTPRequestError; const Message: string);
 begin
-  FStatusText := UnicodeString(Message);
-  DoFire(FireError);
+  FStatusText := string(Message);
+  DoFire(@FireError);
 end;
 
 procedure TXMLHttpRequest.RequestResponse(Sender: TObject;
-  const ResponseCode, Data: ansistring);
+  const ResponseCode, Data: string);
 begin
-  FStatus := StrToIntDef(Copy(ResponseCode, 1, Pos(' ', ResponseCode) - 1), 0);
-  FStatusText := UnicodeString(ResponseCode);
-  FResponse := UnicodeString(Data);
-  DoFire(FireReadyChangeDone);
+  FStatus := StrToIntDef(ansistring(Copy(ResponseCode, 1, Pos(' ', ResponseCode) - 1)), 0);
+  FStatusText := string(ResponseCode);
+  FResponse := string(Data);
+  DoFire(@FireReadyChangeDone);
 end;
 
 function TXMLHttpRequest.RequestForward(Sender: TObject;
-  var newUrl: ansistring): boolean;
+  var newUrl: string): boolean;
 begin
   Result := True;
 end;
@@ -156,20 +156,20 @@ end;
 
 function TXMLHttpRequest.RequestHeadersReceived(Sender: TObject): boolean;
 begin
-  DoFire(FireReadyChangeHeadersReceived);
+  DoFire(@FireReadyChangeHeadersReceived);
   Result := True;
 end;
 
 function TXMLHttpRequest.RequestLoading(Sender: TObject): boolean;
 begin
-  DoFire(FireReadyChangeLoading);
+  DoFire(@FireReadyChangeLoading);
   Result := True;
 end;
 
 function TXMLHttpRequest.RequestConnect(Sender: TObject;
-  Host, Port: ansistring): boolean;
+  Host, Port: string): boolean;
 begin
-  DoFire(FireReadyChangeOpened);
+  DoFire(@FireReadyChangeOpened);
   Result := True;
 end;
 
@@ -243,7 +243,7 @@ function TXMLHttpRequest.getAllResponseHeaders(Args: PJsValueRef;
   ArgCount: word): JsValueRef;
 begin
   if (FReadyState >= 2) and Assigned(FRequest) then
-    Result := StringToJsString(UnicodeString(FRequest.GetAllResponseHeaders))
+    Result := StringToJsString(string(FRequest.GetAllResponseHeaders))
   else
     Result := JsUndefinedValue;
 end;
@@ -252,8 +252,8 @@ function TXMLHttpRequest.getResponseHeader(Args: PJsValueRef;
   ArgCount: word): JsValueRef;
 begin
   if (FReadyState >= 2) and Assigned(FRequest) and (ArgCount > 0) then
-    Result := StringToJsString(UnicodeString(FRequest.GetResponseHeader(
-      ansistring(JsStringToUnicodeString(Args^)))))
+    Result := StringToJsString(string(FRequest.GetResponseHeader(
+      string(JsStringToUnicodeString(Args^)))))
   else
     Result := JsUndefinedValue;
 end;
@@ -265,8 +265,8 @@ begin
   if ArgCount < 2 then
     Exit;
 
-  DoConnect(ansistring(JsStringToUnicodeString(Args^[0])),
-    ansistring(JsStringToUnicodeString(Args^[1])));
+  DoConnect(string(JsStringToUnicodeString(Args^[0])),
+    string(JsStringToUnicodeString(Args^[1])));
   Result := JsTrueValue;
 end;
 
@@ -282,7 +282,7 @@ begin
   if (FReadyState <= 1) and Assigned(FRequest) then
   begin
     if ArgCount > 0 then
-      FRequest.Send(ansistring(JsStringToUnicodeString(Args^)))
+      FRequest.Send(string(JsStringToUnicodeString(Args^)))
     else
       FRequest.Send('');
     if FSynchronous then
@@ -298,8 +298,8 @@ begin
   Result := JsUndefinedValue;
   if (FReadyState <= 1) and Assigned(FRequest) and (ArgCount > 1) then
     FRequest.SetRequestHeader(
-      ansistring(JsStringToUnicodeString(Args^[0])),
-      ansistring(JsStringToUnicodeString(Args^[1])));
+      string(JsStringToUnicodeString(Args^[0])),
+      string(JsStringToUnicodeString(Args^[1])));
 end;
 
 end.

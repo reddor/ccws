@@ -1,22 +1,5 @@
 unit chakraserverconfig;
-{
- chakra classes for server configuration & global server manager class
 
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -82,8 +65,8 @@ type
   private
     FServer: TWebserver;
     FListener: TWebserverListener;
-    function GetIP: UnicodeString;
-    function GetPort: UnicodeString;
+    function GetIP: string;
+    function GetPort: string;
   published
     { remove() - removes this listener }
     function remove(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
@@ -92,8 +75,8 @@ type
 
     function setCiphers(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
 
-    property ip: UnicodeString read GetIP;
-    property port: UnicodeString read GetPort;
+    property ip: string read GetIP;
+    property port: string read GetPort;
   end;
 
   { TChakraWebserverObject }
@@ -125,20 +108,20 @@ type
     FServer: TWebserver;
     FInstance: TChakraInstance;
     FServerObject: TChakraWebserverObject;
-    FPath: ansistring;
+    FPath: string;
   public
-    constructor Create(const BasePath: ansistring; TestMode: Boolean = false);
+    constructor Create(const BasePath: string; TestMode: Boolean = false);
     destructor Destroy; override;
     function Execute(Filename: string): Boolean;
     procedure Process;
     property Server: TWebserver read FServer;
-    property Path: ansistring read FPath;
+    property Path: string read FPath;
   end;
 
 var
   ServerManager: TWebserverManager;
 
-function StripBasePath(filename: ansistring): ansistring;
+function StripBasePath(filename: string): string;
 
 implementation
 
@@ -148,7 +131,7 @@ uses
   chakraprocess,
   logging;
 
-function StripBasePath(filename: ansistring): ansistring;
+function StripBasePath(filename: string): string;
 begin
   if not Assigned(ServerManager) then
     result:=filename
@@ -160,7 +143,7 @@ end;
 
 { TChakraWebserverListener }
 
-function TChakraWebserverListener.GetIP: UnicodeString;
+function TChakraWebserverListener.GetIP: string;
 begin
   if Assigned(FListener) then
     result:=FListener.IP
@@ -168,7 +151,7 @@ begin
     result:='';
 end;
 
-function TChakraWebserverListener.GetPort: UnicodeString;
+function TChakraWebserverListener.GetPort: string;
 begin
   if Assigned(FListener) then
     result:=FListener.Port
@@ -200,7 +183,9 @@ begin
   if Assigned(FListener) then
     if not FListener.SSL then
 
-    FListener.EnableSSL(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])), JsStringToUnicodeString(JsValueAsJsString(Arguments^[1])), JsStringToUnicodeString(JsValueAsJsString(Arguments^[2])));
+    FListener.EnableSSL(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))),
+                        string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))),
+                        string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[2]))));
 end;
 
 function TChakraWebserverListener.setCiphers(Arguments: PJsValueRefArray;
@@ -210,7 +195,7 @@ begin
   if CountArguments<1 then
    Exit;
   if Assigned(FListener) and(FListener.SSL) then
-    FListener.SetSSLCiphers(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
+    FListener.SetSSLCiphers(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
 end;
 
 { TChakraWebserverSite }
@@ -221,7 +206,7 @@ begin
   result:=JsUndefinedValue;
   if (CountArguments <1) or (not Assigned(FSite)) then
     Exit;
-  FSite.AddIndexPage(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
+  FSite.AddIndexPage(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
 end;
 
 function TChakraWebserverSite.addHostname(Arguments: PJsValueRefArray;
@@ -234,7 +219,7 @@ begin
   if not Assigned(FSite) then
     Exit;
 
-  FSite.AddHostAlias(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
+  FSite.AddHostAlias(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
 end;
 
 function TChakraWebserverSite.addForward(Arguments: PJsValueRefArray;
@@ -247,7 +232,7 @@ begin
   if not Assigned(FSite) then
     Exit;
 
-  FSite.AddForward(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  FSite.AddForward(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 end;
 
 function TChakraWebserverSite.addScriptAlias(Arguments: PJsValueRefArray;
@@ -261,18 +246,19 @@ begin
   if not Assigned(FSite) then
     Exit;
 
-  FSite.AddScriptDirectory(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  FSite.AddScriptDirectory(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 end;
 
 function TChakraWebserverSite.addStatusPage(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 begin
+  result:=jsUndefinedValue;
   if not Assigned(FSite) then
     Exit;
 
   if CountArguments<2 then Exit;
 
-  FSite.AddCustomStatusPage(Round(JsNumberToDouble(Arguments^[0])), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  FSite.AddCustomStatusPage(Round(JsNumberToDouble(Arguments^[0])), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 end;
 
 function TChakraWebserverSite.addResponseHeader(Arguments: PJsValueRefArray;
@@ -282,13 +268,13 @@ begin
   if CountArguments<2 then
     Exit;
 
-  FSite.AddResponseHeader(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  FSite.AddResponseHeader(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 end;
 
 function TChakraWebserverSite.addWebsocket(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
-  url: UnicodeString;
+  url: string;
 begin
   result:=JsUndefinedValue;
   if not Assigned(FSite) then
@@ -297,20 +283,20 @@ begin
   if CountArguments<2 then
     Exit;
 
-  url:=JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]));
-  FSite.AddCustomHandler(ansistring(url), TChakraWebsocket.Create(FServer, FSite, ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))), url));
+  url:=string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
+  FSite.AddCustomHandler(string(url), TChakraWebsocket.Create(FServer, FSite, string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))), url));
 end;
 
 function TChakraWebserverSite.addWhitelistExecutable(
   Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
 var
-  s: ansistring;
+  s: string;
 begin
   result:=JsUndefinedValue;
   if (CountArguments<1) or not Assigned(FSite) then
     Exit;
 
-  s:=ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
+  s:=string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
   if Pos('/', s)<>1 then
     s:=FSite.Path+'bin/'+s;
 
@@ -328,7 +314,7 @@ begin
   if CountArguments<1 then
     Exit;
 
-  if SysUtils.FileExists(FSite.Path + ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))) then
+  if SysUtils.FileExists(FSite.Path + string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))) then
     Result:=JsTrueValue;
 end;
 
@@ -343,8 +329,8 @@ begin
   if CountArguments<1 then
     Exit;
 
-  Result:=StringToJsString(LoadFile(FSite.Path + ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))));
-  //Result:=BESENStringValue(BESENUTF8ToUTF16(BESENGetFileContent(FSite.Path + ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]^)))));
+  Result:=StringToJsString(LoadFile(FSite.Path + string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))));
+  //Result:=BESENStringValue(BESENUTF8ToUTF16(BESENGetFileContent(FSite.Path + string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]^)))));
 end;
 
 function TChakraWebserverSite.unload(Arguments: PJsValueRefArray;
@@ -372,7 +358,7 @@ begin
   if CountArguments<2 then
     Exit;
 
-  Listener:=FServer.AddListener(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  Listener:=FServer.AddListener(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 
   ListenerObj:=TChakraWebserverListener.Create();
   ListenerObj.FListener:=Listener;
@@ -383,7 +369,7 @@ begin
   if CountArguments<5 then
     Exit;
   if Assigned(Listener) then
-    Listener.EnableSSL(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[2]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[3]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[4]))));
+    Listener.EnableSSL(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[2]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[3]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[4]))));
 end;
 
 function TChakraWebserverObject.removeListener(Arguments: PJsValueRefArray;
@@ -418,7 +404,7 @@ begin
   if CountArguments<1 then
     Exit;
 
-  Site:=FServer.SiteManager.AddSite(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
+  Site:=FServer.SiteManager.AddSite(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))));
 
   if Assigned(Site) then
   begin
@@ -449,7 +435,7 @@ begin
   Result:=JsUndefinedValue;
   if CountArguments<2 then Exit;
 
-  OverwriteMimeType(ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), ansistring(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
+  OverwriteMimeType(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 end;
 
 function TChakraWebserverObject.setDefaultSite(Arguments: PJsValueRefArray;
@@ -477,7 +463,7 @@ end;
 
 { TWebserverManager }
 
-constructor TWebserverManager.Create(const BasePath: ansistring;
+constructor TWebserverManager.Create(const BasePath: string;
   TestMode: Boolean);
 begin
   ServerManager:=Self;
@@ -500,8 +486,6 @@ begin
 end;
 
 function TWebserverManager.Execute(Filename: string): Boolean;
-var
-  lastfile: Integer;
 begin
   result:=False;
   //lastfile:=FInstance.CurrentFile;

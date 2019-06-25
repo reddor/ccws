@@ -1,19 +1,14 @@
 unit chakrainstance;
 
-{$mode objfpc}{$H+}
+{$i ccwssettings.inc}
 
 interface
 
 uses
   Classes,
   SysUtils,
-  {$IFDEF MSWINDOWS}
-  Windows,
-  expipe,
-  {$ELSE}
   BaseUnix,
   Unix,
-  {$ENDIF}
   ChakraCommon,
   ChakraCoreClasses,
   ChakraCoreUtils,
@@ -46,11 +41,10 @@ type
   private
     FManager: TWebserverSiteManager;
     FSite: TWebserverSite;
-    FAlias, FBasePath: UnicodeString;
+    FAlias, FBasePath: string;
     FContext: TChakraCoreContext;
     FConsole: TConsole;
     FSystemObject: TChakraSystemObject;
-    FThread: TThread;
     FReadPipe, FWritePipe: THandle;
     FProc: TCallbackProc;
     FHandlers: array of TCallbackProc;
@@ -69,20 +63,20 @@ type
     constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite; Thread: TThread= nil);
       reintroduce;
     destructor Destroy; override;
-    procedure ExecuteFile(const ScriptFileNames: array of UnicodeString); overload;
-    procedure ExecuteFile(ScriptFilename: UnicodeString); overload;
+    procedure ExecuteFile(const ScriptFileNames: array of string); overload;
+    procedure ExecuteFile(ScriptFilename: string); overload;
     procedure ProcessHandlers;
     procedure AddEventHandler(Handler: TCallbackProc);
     procedure RemoveEventHandler(Handler: TCallbackProc);
-    procedure OutputException(e: Exception; Section: ansistring = '');
+    procedure OutputException(e: Exception; Section: string = '');
     procedure ReadCallback(ATimeout: longword);
     procedure Callback(Proc: TCallbackProc);
     property Context: TChakraCoreContext read FContext;
   end;
 
-function LoadFile(const FileName: UnicodeString): UnicodeString;
-function ExecuteCallback(Obj: TNativeObject; FuncName: UnicodeString; Args: PJsValueRef; ArgCount: Word): JsValueRef; overload;
-function ExecuteCallback(Obj: TNativeObject; FuncName: UnicodeString; const Args: array of JsValueRef): JsValueRef; overload;
+function LoadFile(const FileName: string): string;
+function ExecuteCallback(Obj: TNativeObject; FuncName: string; Args: PJsValueRef; ArgCount: Word): JsValueRef; overload;
+function ExecuteCallback(Obj: TNativeObject; FuncName: string; const Args: array of JsValueRef): JsValueRef; overload;
 
 implementation
 
@@ -90,14 +84,14 @@ uses
   logging,
   xmlhttprequest;
 
-function LoadFile(const FileName: UnicodeString): UnicodeString;
+function LoadFile(const FileName: string): string;
 var
   FileStream: TFileStream;
-  S: UTF8String;
+  S: string;
 begin
   Result := '';
 
-  FileStream := TFileStream.Create(UnicodeString(FileName), fmOpenRead);
+  FileStream := TFileStream.Create(ansistring(FileName), fmOpenRead);
   try
     if FileStream.Size = 0 then
       Exit;
@@ -105,13 +99,13 @@ begin
     SetLength(S, FileStream.Size);
     FileStream.Read(S[1], FileStream.Size);
 
-    Result := UTF8ToString(S);
+    Result := s;
   finally
     FileStream.Free;
   end;
 end;
 
-function ExecuteCallback(Obj: TNativeObject; FuncName: UnicodeString; Args: PJsValueRef; ArgCount: Word): JsValueRef;
+function ExecuteCallback(Obj: TNativeObject; FuncName: string; Args: PJsValueRef; ArgCount: Word): JsValueRef;
 begin
   Result:=JsGetProperty(Obj.Instance, FuncName);
   if Assigned(Result) and (JsGetValueType(Result) = JsFunction) then
@@ -120,7 +114,7 @@ begin
     Result := JsUndefinedValue;
 end;
 
-function ExecuteCallback(Obj, ThisObj: TNativeObject; FuncName: UnicodeString;
+function ExecuteCallback(Obj, ThisObj: TNativeObject; FuncName: string;
   const Args: array of JsValueRef): JsValueRef;
 begin
   Result:=JsGetProperty(Obj.Instance, FuncName);
@@ -130,7 +124,7 @@ begin
     Result := JsUndefinedValue;
 end;
 
-function ExecuteCallback(Obj: TNativeObject; FuncName: UnicodeString;
+function ExecuteCallback(Obj: TNativeObject; FuncName: string;
   const Args: array of JsValueRef): JsValueRef;
 begin
   Result:=JsGetProperty(Obj.Instance, FuncName);
@@ -180,7 +174,7 @@ end;
 function TChakraSystemObject.log(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
-  s: UnicodeString;
+  s: string;
   i: Integer;
 begin
   result:=JsUndefinedValue;
@@ -190,11 +184,11 @@ begin
   Context.CurrentContext;
   s:='';
   for i:=0 to CountArguments-1 do
-    s := s + JsStringToUnicodeString(JsValueAsJsString(Arguments^[i]));
+    s := s + string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[i])));
   if Assigned(FSite) then
     FSite.log(llDebug, s)
   else
-    dolog(llDebug, '[script] ' + UnicodeString(s));
+    dolog(llDebug, '[script] ' + string(s));
 end;
 
 function TChakraSystemObject.setTimeout(Arguments: PJsValueRefArray;
@@ -205,8 +199,6 @@ end;
 
 function TChakraSystemObject.readFile(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
-var
-  s: UnicodeString;
 begin
   Result:=JsUndefinedValue;
 
@@ -260,15 +252,15 @@ end;
 
 procedure TChakraInstance.ContextLoadModule(Sender: TObject; Module: TChakraModule);
 var
-  ModuleFileName: UnicodeString;
+  ModuleFileName: string;
 begin
   ModuleFileName := IncludeTrailingPathDelimiter(FBasePath) +
-    UnicodeString(ChangeFileExt(UnicodeString(Module.Name), '.js'));
+    string(ChangeFileExt(string(Module.Name), '.js'));
   if FileExists(ModuleFileName) then
   begin
     Module.Parse(LoadFile(ModuleFileName));
     Module.URL := WideFormat('file://%s/%s',
-      [FAlias, UnicodeString(ChangeFileExt(UnicodeString(Module.Name), '.js'))]);
+      [FAlias, string(ChangeFileExt(string(Module.Name), '.js'))]);
   end;
 end;
 
@@ -278,8 +270,8 @@ begin
 
 end;
 
-procedure TChakraInstance.ConsolePrint(Sender: TObject; const Text: UnicodeString;
-  Level: TInfoLevel);
+procedure TChakraInstance.ConsolePrint(Sender: TObject;
+  const Text: UnicodeString; Level: TInfoLevel);
 begin
   case Level of
     ilError: Write('[Error] ');
@@ -298,8 +290,8 @@ begin
 
   FManager:=Manager;
 
-  FBasePath := UnicodeString(ExtractFilePath(ParamStr(0)));
-  FAlias := UnicodeString(ChangeFileExt(ExtractFileName(ParamStr(0)), ''));
+  FBasePath := string(ExtractFilePath(ParamStr(0)));
+  FAlias := string(ChangeFileExt(ExtractFileName(ParamStr(0)), ''));
 
   FContext := TChakraCoreContext.Create(Self);
   FContext.OnLoadModule := @ContextLoadModule;
@@ -342,7 +334,7 @@ begin
 end;
 
 procedure TChakraInstance.ExecuteFile(
-  const ScriptFileNames: array of UnicodeString);
+  const ScriptFileNames: array of string);
 var
   i: integer;
 begin
@@ -350,16 +342,16 @@ begin
     ExecuteFile(ScriptFileNames[i]);
 end;
 
-procedure TChakraInstance.ExecuteFile(ScriptFilename: UnicodeString);
+procedure TChakraInstance.ExecuteFile(ScriptFilename: string);
 var
-  OldPath, S: UnicodeString;
+  OldPath, S: string;
 begin
   OldPath := FBasePath;
   S := ExtractFilePath(ScriptFilename);
   if S <> '' then
     FBasePath := S;
   FContext.RunScript(LoadFile(ScriptFilename),
-      UnicodeString(ExtractFileName(ScriptFilename)));
+      string(ExtractFileName(ScriptFilename)));
   FBasePath := OldPath;
 end;
 
@@ -396,14 +388,14 @@ begin
   end;
 end;
 
-procedure TChakraInstance.OutputException(e: Exception; Section: ansistring);
+procedure TChakraInstance.OutputException(e: Exception; Section: string);
 var
-  s: ansistring;
+  s: string;
 begin
   if e is EChakraCoreScript then
-    s:='['+(EChakraCoreScript(e).ScriptURL)+':'+IntToStr(EChakraCoreScript(e).Line)+'] '+EChakraCoreScript(e).Source+#13#10+e.Message
+    s:='['+string(EChakraCoreScript(e).ScriptURL)+':'+string(IntToStr(EChakraCoreScript(e).Line))+'] '+string(EChakraCoreScript(e).Source)+#13#10+string(e.Message)
   else
-    s:=e.Message;
+    s:=string(e.Message);
   if Section <> '' then
     s:='['+Section+'] '+s;
 

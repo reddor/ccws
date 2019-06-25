@@ -1,22 +1,5 @@
 unit logging;
-{
- the most simplistic logging system
 
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -36,7 +19,7 @@ var
   GlobalLogLevel: TLoglevel;
 
 procedure dolog(LogLevel: TLogLevel; const Message: TLogItems); overload;
-procedure dolog(Loglevel: TLoglevel; msg: ansistring); overload;
+procedure dolog(Loglevel: TLoglevel; msg: string); overload;
 procedure LogToFile(filename: string);
 
 implementation
@@ -52,6 +35,7 @@ begin
   AssignFile(Filehandle, filename);
   rewrite(Filehandle);
   DoLogToFile:=True;
+
 end;
 
 procedure dolog(LogLevel: TLogLevel; const Message: TLogItems);
@@ -74,20 +58,20 @@ begin
   Writeln;
 end;
 
-procedure dolog(Loglevel: TLoglevel; msg: ansistring);
+procedure dolog(Loglevel: TLoglevel; msg: string);
 var
-  s:ansistring;
+  s: string;
 begin
   if LogLevel<GlobalLogLevel then
     Exit;
   case Loglevel of
-    llDebug:   s:='['+TimeToStr(Time)+']   [Debug] '+msg;
-    llNotice:  s:='['+TimeToStr(Time)+']  [Notice] '+msg;
-    llWarning: s:='['+TimeToStr(Time)+'] [Warning] '+msg;
-    llError:   s:='['+TimeToStr(Time)+']   [Error] '+msg;
-    llFatal:   s:='['+TimeToStr(Time)+']   [Fatal] '+msg;
+    llDebug:   s:='['+string(TimeToStr(Time))+']   [Debug] '+msg;
+    llNotice:  s:='['+string(TimeToStr(Time))+']  [Notice] '+msg;
+    llWarning: s:='['+string(TimeToStr(Time))+'] [Warning] '+msg;
+    llError:   s:='['+string(TimeToStr(Time))+']   [Error] '+msg;
+    llFatal:   s:='['+string(TimeToStr(Time))+']   [Fatal] '+msg;
     else
-               s:='['+TimeToStr(Time)+'] [???????] '+msg;
+               s:='['+string(TimeToStr(Time))+'] [???????] '+msg;
   end;
   CS.Enter;
   if DoLogToFile then

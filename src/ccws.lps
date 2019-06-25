@@ -4,12 +4,12 @@
     <PathDelim Value="\"/>
     <Version Value="10"/>
     <BuildModes Active="Default"/>
-    <Units Count="25">
+    <Units Count="30">
       <Unit0>
         <Filename Value="ccws.lpr"/>
         <IsPartOfProject Value="True"/>
-        <CursorPos X="10" Y="16"/>
-        <UsageCount Value="21"/>
+        <CursorPos X="12" Y="2"/>
+        <UsageCount Value="24"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -18,14 +18,14 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="19"/>
         <CursorPos X="105" Y="28"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="24"/>
       </Unit1>
       <Unit2>
         <Filename Value="ccwssettings.inc"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="22"/>
-        <CursorPos X="15"/>
-        <UsageCount Value="21"/>
+        <EditorIndex Value="26"/>
+        <CursorPos X="3" Y="2"/>
+        <UsageCount Value="24"/>
         <Loaded Value="True"/>
       </Unit2>
       <Unit3>
@@ -34,95 +34,95 @@
         <EditorIndex Value="1"/>
         <TopLine Value="43"/>
         <CursorPos X="19" Y="63"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="24"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="webserver.pas"/>
-        <EditorIndex Value="15"/>
-        <TopLine Value="1179"/>
-        <CursorPos X="8" Y="1285"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="17"/>
+        <TopLine Value="1178"/>
+        <CursorPos X="95" Y="1189"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="sslclass.pas"/>
-        <EditorIndex Value="21"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="25"/>
+        <TopLine Value="13"/>
+        <CursorPos X="74" Y="24"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="epollsockets.pas"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="19"/>
-        <TopLine Value="326"/>
-        <CursorPos X="35" Y="341"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="23"/>
+        <TopLine Value="803"/>
+        <CursorPos X="21" Y="803"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit6>
       <Unit7>
         <Filename Value="webserverhosts.pas"/>
-        <EditorIndex Value="14"/>
-        <TopLine Value="360"/>
-        <CursorPos X="24" Y="373"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="16"/>
+        <TopLine Value="52"/>
+        <CursorPos X="14" Y="63"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit7>
       <Unit8>
         <Filename Value="filecache.pas"/>
-        <EditorIndex Value="17"/>
-        <TopLine Value="184"/>
-        <CursorPos X="28" Y="184"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos Y="22"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit8>
       <Unit9>
         <Filename Value="chakracore\src\common.inc"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="14"/>
         <TopLine Value="15"/>
         <CursorPos X="35" Y="15"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit9>
       <Unit10>
         <Filename Value="chakrainstance.pas"/>
-        <EditorIndex Value="7"/>
-        <TopLine Value="209"/>
-        <CursorPos X="6" Y="229"/>
-        <UsageCount Value="10"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="49"/>
+        <CursorPos X="26" Y="60"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="datautils.pas"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="15"/>
         <TopLine Value="43"/>
         <CursorPos X="100" Y="43"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit11>
       <Unit12>
         <Filename Value="logging.pas"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="34"/>
-        <CursorPos X="92" Y="43"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="14"/>
+        <CursorPos X="22" Y="18"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit12>
       <Unit13>
         <Filename Value="chakrarttiobject.pas"/>
         <UnitName Value="ChakraRTTIObject"/>
-        <EditorIndex Value="10"/>
-        <TopLine Value="15"/>
-        <CursorPos X="97" Y="33"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="12"/>
+        <TopLine Value="595"/>
+        <CursorPos X="25" Y="603"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit13>
       <Unit14>
         <Filename Value="chakracore\src\ChakraCoreClasses.pas"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="13"/>
         <TopLine Value="318"/>
         <CursorPos X="17" Y="333"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit14>
       <Unit15>
@@ -135,42 +135,41 @@
       </Unit15>
       <Unit16>
         <Filename Value="mimehelper.pas"/>
-        <EditorIndex Value="18"/>
-        <TopLine Value="36"/>
-        <CursorPos Y="57"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="22"/>
+        <CursorPos X="28" Y="5"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit16>
       <Unit17>
         <Filename Value="chakrawebsocket.pas"/>
-        <EditorIndex Value="20"/>
-        <TopLine Value="477"/>
-        <CursorPos X="38" Y="490"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="24"/>
+        <TopLine Value="646"/>
+        <CursorPos X="49" Y="679"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit17>
       <Unit18>
         <Filename Value="xmlhttprequest.pas"/>
         <EditorIndex Value="5"/>
-        <TopLine Value="104"/>
-        <CursorPos X="29" Y="108"/>
-        <UsageCount Value="10"/>
+        <TopLine Value="114"/>
+        <CursorPos X="22" Y="120"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit18>
       <Unit19>
         <Filename Value="chakraevents.pas"/>
         <EditorIndex Value="4"/>
-        <TopLine Value="12"/>
-        <CursorPos X="17" Y="12"/>
-        <UsageCount Value="10"/>
+        <TopLine Value="289"/>
+        <CursorPos Y="301"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit19>
       <Unit20>
         <Filename Value="chakraserverconfig.pas"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="472"/>
-        <CursorPos X="68" Y="489"/>
-        <UsageCount Value="10"/>
+        <TopLine Value="497"/>
+        <CursorPos Y="511"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit20>
       <Unit21>
@@ -178,150 +177,216 @@
         <EditorIndex Value="3"/>
         <TopLine Value="1265"/>
         <CursorPos X="99" Y="1285"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit21>
       <Unit22>
         <Filename Value="chakracore\src\ChakraCoreUtils.pas"/>
-        <EditorIndex Value="8"/>
-        <TopLine Value="24"/>
-        <CursorPos X="29" Y="38"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="38"/>
+        <CursorPos X="5" Y="52"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit22>
       <Unit23>
         <Filename Value="chakracore\src\ChakraCommon.pas"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="11"/>
         <TopLine Value="1971"/>
         <CursorPos X="12" Y="1985"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit23>
       <Unit24>
         <Filename Value="httphelper.pas"/>
-        <EditorIndex Value="16"/>
-        <TopLine Value="374"/>
-        <CursorPos Y="388"/>
-        <UsageCount Value="10"/>
+        <EditorIndex Value="21"/>
+        <TopLine Value="1024"/>
+        <CursorPos Y="1051"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit24>
+      <Unit25>
+        <Filename Value="..\..\..\..\usr\share\fpcsrc\3.0.4\packages\fcl-base\src\base64.pp"/>
+        <EditorIndex Value="20"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="..\..\..\..\usr\share\fpcsrc\3.0.4\packages\hash\src\md5.pp"/>
+        <EditorIndex Value="19"/>
+        <TopLine Value="111"/>
+        <CursorPos X="72" Y="125"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="synapse\blcksock.pas"/>
+        <EditorIndex Value="18"/>
+        <TopLine Value="1001"/>
+        <CursorPos X="15" Y="1011"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="httprequest.pas"/>
+        <EditorIndex Value="7"/>
+        <CursorPos Y="3"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="chakraprocess.pas"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="178"/>
+        <CursorPos X="71" Y="201"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit29>
     </Units>
-    <JumpHistory Count="26" HistoryIndex="25">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1285" TopLine="1265"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="348" TopLine="334"/>
       </Position1>
       <Position2>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1288" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="349" TopLine="334"/>
       </Position2>
       <Position3>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1289" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="350" TopLine="334"/>
       </Position3>
       <Position4>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1291" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="351" TopLine="334"/>
       </Position4>
       <Position5>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1293" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="352" TopLine="334"/>
       </Position5>
       <Position6>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1288" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="354" TopLine="334"/>
       </Position6>
       <Position7>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1289" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="353" TopLine="334"/>
       </Position7>
       <Position8>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1293" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="91" TopLine="77"/>
       </Position8>
       <Position9>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1295" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="92" TopLine="83"/>
       </Position9>
       <Position10>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1297" TopLine="1275"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="94" TopLine="83"/>
       </Position10>
       <Position11>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="748" TopLine="735"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="95" TopLine="83"/>
       </Position11>
       <Position12>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="518" TopLine="505"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="96" TopLine="83"/>
       </Position12>
       <Position13>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1221" TopLine="1208"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="99" TopLine="83"/>
       </Position13>
       <Position14>
-        <Filename Value="epollsockets.pas"/>
-        <Caret Line="403" TopLine="390"/>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="100" TopLine="83"/>
       </Position14>
       <Position15>
-        <Filename Value="epollsockets.pas"/>
-        <Caret Line="401" Column="15" TopLine="387"/>
+        <Filename Value="ccws.lpr"/>
+        <Caret Line="152" Column="18" TopLine="144"/>
       </Position15>
       <Position16>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1221" TopLine="1208"/>
+        <Filename Value="ccws.lpr"/>
+        <Caret Line="2" Column="12"/>
       </Position16>
       <Position17>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1283" Column="13" TopLine="1272"/>
+        <Filename Value="ccwssettings.inc"/>
+        <Caret Line="2" Column="3"/>
       </Position17>
       <Position18>
         <Filename Value="webserver.pas"/>
-        <Caret Line="697" TopLine="684"/>
+        <Caret Line="486" Column="23" TopLine="473"/>
       </Position18>
       <Position19>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="100" Column="15" TopLine="92"/>
+        <Filename Value="webserverhosts.pas"/>
+        <Caret Line="53" Column="14" TopLine="41"/>
       </Position19>
       <Position20>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="113" Column="23" TopLine="92"/>
+        <Filename Value="webserverhosts.pas"/>
       </Position20>
       <Position21>
         <Filename Value="webserver.pas"/>
-        <Caret Line="1297" Column="8" TopLine="1284"/>
+        <Caret Line="486" Column="37" TopLine="473"/>
       </Position21>
       <Position22>
         <Filename Value="webserver.pas"/>
-        <Caret Line="1298" TopLine="1278"/>
+        <Caret Line="415" Column="20" TopLine="402"/>
       </Position22>
       <Position23>
         <Filename Value="webserver.pas"/>
-        <Caret Line="1297" TopLine="1278"/>
+        <Caret Line="649" Column="30" TopLine="630"/>
       </Position23>
       <Position24>
-        <Filename Value="webserver.pas"/>
-        <Caret Line="1299" TopLine="1278"/>
+        <Filename Value="webserverhosts.pas"/>
+        <Caret Line="63" Column="14" TopLine="52"/>
       </Position24>
       <Position25>
         <Filename Value="webserver.pas"/>
-        <Caret Line="1285" Column="8" TopLine="1273"/>
+        <Caret Line="649" Column="32" TopLine="630"/>
       </Position25>
       <Position26>
-        <Filename Value="epollsockets.pas"/>
-        <Caret Line="111" Column="17" TopLine="101"/>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="82" Column="19" TopLine="71"/>
       </Position26>
+      <Position27>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="880" Column="38" TopLine="867"/>
+      </Position27>
+      <Position28>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="70" Column="28" TopLine="54"/>
+      </Position28>
+      <Position29>
+        <Filename Value="webserver.pas"/>
+        <Caret Line="1189" Column="95" TopLine="1178"/>
+      </Position29>
+      <Position30>
+        <Filename Value="chakrainstance.pas"/>
+        <Caret Line="306" Column="22" TopLine="293"/>
+      </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="1">
+    <BreakPoints Count="3">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="epollsockets.pas"/>
-        <Line Value="475"/>
+        <Source Value="chakrainstance.pas"/>
+        <Line Value="92"/>
       </Item1>
+      <Item2>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="chakraserverconfig.pas"/>
+        <Line Value="511"/>
+      </Item2>
+      <Item3>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="ccws.lpr"/>
+        <Line Value="208"/>
+      </Item3>
     </BreakPoints>
   </Debugging>
 </CONFIG>

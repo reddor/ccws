@@ -1,22 +1,5 @@
 unit chakrawebsocket;
-{
- asynchronous besen classes for websockets (and regular http requests)
 
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -49,17 +32,17 @@ type
   TChakraWebsocketClient = class(TNativeRTTIObject)
   private
     FIsRequest: Boolean;
-    FMimeType: UnicodeString;
-    FReply: UnicodeString;
+    FMimeType: string;
+    FReply: string;
     FConnection: THTTPConnection;
-    FReturnType: UnicodeString;
+    FReturnType: string;
     FRefCounter: Integer;
-    function GetHostname: UnicodeString;
+    function GetHostname: string;
     function GetLag: Integer;
-    function GetParameter: UnicodeString;
+    function GetParameter: string;
     function GetPingTime: Integer;
     function GetPongTime: Integer;
-    function GetPostData: UnicodeString;
+    function GetPostData: string;
     procedure SetPingTime(AValue: Integer);
     procedure SetPongTime(AValue: Integer);
   public
@@ -76,21 +59,21 @@ type
     { redirect(url) - perform a redirect (if not websocket) }
     function redirect(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { the remote client ip }
-    property host: UnicodeString read GetHostname;
+    property host: string read GetHostname;
     { client lag - only measured/updated during idle pings }
     property lag: Integer read GetLag;
     { raw http post data (for regular http requests) }
-    property postData: UnicodeString read GetPostData;
+    property postData: string read GetPostData;
     { ping interval for client connection (only sent when idle), in seconds }
     property pingTime: Integer read GetPingTime write SetPingTime;
     { maximum timeframe for a ping-reply before the connection is dropped }
     property maxPongTime: Integer read GetPongTime write SetPongTime;
     { the mime type for the response. usually "text/html" }
-    property mimeType: UnicodeString read FMimeType write FMimeType;
+    property mimeType: string read FMimeType write FMimeType;
     { the http response message. usually "200 OK" }
-    property returnType: UnicodeString read FReturnType write FReturnType;
+    property returnType: string read FReturnType write FReturnType;
     { the http request uri parameter }
-    property parameter: UnicodeString read GetParameter;
+    property parameter: string read GetParameter;
   end;
 
   TChakraWebsocket = class;
@@ -103,7 +86,7 @@ type
     //FOnData: TBESENObjectFunction;
     //FOnDisconnect: TBESENObjectFunction;
     //FOnRequest: TBESENObjectFunction;
-    FUrl: UnicodeString;
+    FUrl: string;
     FParentThread: TChakraWebsocket;
     function GetUnloadTimeout: Integer;
     procedure SetUnloadTimeout(AValue: Integer);
@@ -117,7 +100,7 @@ type
     property onData: TBESENObjectFunction read FOnData write FOnData;
     { onDisconnect = function(client) - callback function when a client disconnects }
     property onDisconnect: TBESENObjectFunction read FOnDisconnect write FOnDisconnect; *)
-    property url: UnicodeString read FUrl;
+    property url: string read FUrl;
     property unloadTimeout: Integer read GetUnloadTimeout write SetUnloadTimeout;
   end;
 
@@ -148,13 +131,13 @@ type
   TChakraWebsocket = class(TEPollWorkerThread)
   private
     FAutoUnload: Integer;
-    FFilename: UnicodeString;
+    FFilename: string;
     FSite: TWebserverSite;
     FInstance: TChakraInstance;
     FHandler: TChakraWebsocketHandler;
     FClients: array of TChakraWebsocketClient;
     FIdleTicks,FGCTicks: Integer;
-    FUrl: UnicodeString;
+    FUrl: string;
     FFlushList: TObjectList;
   protected
     procedure LoadBESEN;
@@ -162,11 +145,11 @@ type
     function GetClient(AClient: THTTPConnection): TChakraWebsocketClient;
     procedure ThreadTick; override;
     procedure AddConnection(Client: TEPollSocket);
-    procedure ClientData(Sender: THTTPConnection; const data: AnsiString);
+    procedure ClientData(Sender: THTTPConnection; const data: string);
     procedure ClientDisconnect(Sender: TEPollSocket);
     procedure Initialize; override;
   public
-    constructor Create(aParent: TWebserver; ASite: TWebserverSite; AFile: UnicodeString; Url: UnicodeString);
+    constructor Create(aParent: TWebserver; ASite: TWebserverSite; AFile: string; Url: string);
     destructor Destroy; override;
     procedure AddConnectionToFlush(AConnection: THTTPConnection);
     property Site: TWebserverSite read FSite;
@@ -259,13 +242,13 @@ function TChakraWebsocketBulkSender.send(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
   i: Integer;
-  data: UnicodeString;
+  data: string;
 begin
   result:=JsUndefinedValue;
   if CountArguments<1 then
     Exit;
 
-  data:=JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]));
+  data:=string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
 
   for i:=0 to Length(FClients)-1 do
   with FClients[i] do
@@ -298,7 +281,7 @@ end;
 { TChakraWebsocketHandler }
 
 constructor TChakraWebsocket.Create(aParent: TWebserver; ASite: TWebserverSite;
-  AFile: UnicodeString; Url: UnicodeString);
+  AFile: string; Url: string);
 begin
   FSite:=ASite;
   OnConnection:=@AddConnection;
@@ -379,7 +362,7 @@ begin
 end;
 
 procedure TChakraWebsocket.ClientData(Sender: THTTPConnection;
-  const data: AnsiString);
+  const data: string);
 var
   client: TChakraWebsocketClient;
   //a: array[0..1] of PBESENValue;
@@ -587,14 +570,14 @@ begin
   if FIsRequest then
   begin
     // for a normal http request, we cache the reply and send it out at once
-    FReply:=FReply + JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))
+    FReply:=FReply + string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))
   end else
   begin
     { BUG: Calling OpenSSL functions from a native script callback function
       can cause weird exceptions (from within OpenSSL)... in besen. but does it
       also happen with chakra?
       }
-    FConnection.SendWS(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])), not FConnection.IsSSL);
+    FConnection.SendWS(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), not FConnection.IsSSL);
     if FConnection.IsSSL then
      TChakraWebsocket(FConnection.Parent).AddConnectionToFlush(FConnection);
   end;
@@ -607,13 +590,13 @@ begin
 
   if CountArguments>0 then
     if(Assigned(FConnection)) then
-      Result:=StringToJsString(FConnection.Header.header[JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))]);
+      Result:=StringToJsString(FConnection.Header.header[string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])))]);
 end;
 
 function TChakraWebsocketClient.redirect(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
-  url: UnicodeString;
+  url: string;
 begin
   Result := JsUndefinedValue;
 
@@ -621,7 +604,7 @@ begin
   begin
     if (CountArguments>0) and FIsRequest then
     begin
-      url:=JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]));
+      url:=string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
       FConnection.Reply.header.Add('Location', url);
       FConnection.SendContent('text/html', '<html><body>Content has been moved to <a href="'+url+'">'+url+'</a></body></html>', '302 Found');
       FConnection.Close;
@@ -654,9 +637,9 @@ begin
     result:=-1;
 end;
 
-function TChakraWebsocketClient.GetParameter: UnicodeString;
+function TChakraWebsocketClient.GetParameter: string;
 begin
-  result:=UnicodeString(FConnection.Header.parameters);
+  result:=string(FConnection.Header.parameters);
 end;
 
 function TChakraWebsocketClient.GetPingTime: Integer;
@@ -675,7 +658,7 @@ begin
     result:=-1;
 end;
 
-function TChakraWebsocketClient.GetPostData: UnicodeString;
+function TChakraWebsocketClient.GetPostData: string;
 begin
   result:='';
 end;
@@ -713,7 +696,7 @@ begin
   FRefCounter:=0;
 end;
 
-function TChakraWebsocketClient.GetHostname: UnicodeString;
+function TChakraWebsocketClient.GetHostname: string;
 begin
   if Assigned(FConnection) then
     result:=FConnection.GetRemoteIP

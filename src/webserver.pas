@@ -1,22 +1,5 @@
 unit webserver;
-{
- the webserver core
 
- Copyright (C) 2016 Simon Ley
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-}
 {$i ccwssettings.inc}
 
 interface
@@ -58,16 +41,16 @@ type
 
   TWebserver = class;
   THTTPConnection = class;
-  THTTPConnectionDataReceived = procedure(Sender: THTTPConnection; const Data: AnsiString) of object;
-  THTTPConnectionPostDataReceived = procedure(Sender: THTTPConnection; const Data: AnsiString; finished: Boolean) of object;
-  TCGIEnvCallback = procedure(const Name, Value: AnsiString) of object;
+  THTTPConnectionDataReceived = procedure(Sender: THTTPConnection; const Data: string) of object;
+  THTTPConnectionPostDataReceived = procedure(Sender: THTTPConnection; const Data: string; finished: Boolean) of object;
+  TCGIEnvCallback = procedure(const Name, Value: string) of object;
 
   { THTTPConnection }
   THTTPConnection = class(TEPollSocket)
   private
-    FInBuffer: AnsiString;
-    FIdent: AnsiString;
-    FPathUrl: UnicodeString;
+    FInBuffer: string;
+    FIdent: string;
+    FPathUrl: string;
     FMaxPongTime: Integer;
     FOnPostData: THTTPConnectionPostDataReceived;
     FOnWebsocketData: THTTPConnectionDataReceived;
@@ -79,15 +62,15 @@ type
     FVersion: TWebsocketVersion;
     FIdletime: Integer;
     hassegmented: Boolean;
-    target: UnicodeString;
-    FWSData: AnsiString;
+    target: string;
+    FWSData: string;
     FLag: Integer;
     FServer: TWebserver;
     FHost: TWebserverSite;
     FContentLength: Integer;
     FGotHeader: Boolean;
     FLastPing: longint;
-    FPostData: AnsiString;
+    FPostData: string;
     procedure CheckMessageBody;
     function GotCompleteRequest: Boolean;
     function IsExternalScript: Boolean;
@@ -107,11 +90,10 @@ type
     function CanWebsocket: Boolean;
     procedure UpgradeToWebsocket;
     function CheckTimeout: Boolean; override;
-    procedure GetCGIEnvVars(Callback: TCGIEnvCallback);
     procedure SendStatusCode(const Code: Word);
-    procedure SendWS(data: AnsiString; Flush: Boolean = True);
-    procedure SendContent(mimetype, data: AnsiString; result: AnsiString = '200 OK'; Flush: Boolean = True);
-    procedure SendFile(mimetype: AnsiString; FileName: UnicodeString; result: AnsiString = '200 OK');
+    procedure SendWS(data: string; Flush: Boolean = True);
+    procedure SendContent(mimetype, data: string; result: string = '200 OK'; Flush: Boolean = True);
+    procedure SendFile(mimetype: string; FileName: string; result: string = '200 OK');
     property wsVersion: TWebsocketVersion read FVersion write FVersion;
     property OnWebsocketData: THTTPConnectionDataReceived read FOnWebsocketData write FOnWebsocketData;
     property OnPostData: THTTPConnectionPostDataReceived read FOnPostData write FOnPostData;
@@ -128,19 +110,19 @@ type
   TWebserverListener = class(TThread)
   private
     FParent: TWebserver;
-    FIP: AnsiString;
-    FPort: AnsiString;
+    FIP: string;
+    FPort: string;
     FSSLContext: TAbstractSSLContext;
     FSSL: Boolean;
   protected
     procedure Execute; override;
   public
-    constructor Create(Parent: TWebserver; IP, Port: AnsiString);
+    constructor Create(Parent: TWebserver; IP, Port: string);
     destructor Destroy; override;
-    procedure EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: AnsiString);
-    function SetSSLCiphers(const Ciphers: AnsiString): Boolean;
-    property IP: AnsiString read FIP;
-    property Port: AnsiString read FPort;
+    procedure EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: string);
+    function SetSSLCiphers(const Ciphers: string): Boolean;
+    property IP: string read FIP;
+    property Port: string read FPort;
     property Parent: TWebserver read FParent;
     property SSLContext: TAbstractSSLContext read FSSLContext;
     property SSL: Boolean read FSSL;
@@ -170,10 +152,10 @@ type
   protected
     procedure AddWorkerThread(AThread: TWebserverWorkerThread);
   public
-    constructor Create(const BasePath: AnsiString; IsTestMode: Boolean = False);
+    constructor Create(const BasePath: string; IsTestMode: Boolean = False);
     destructor Destroy; override;
     function SetThreadCount(Count: Integer): Boolean;
-    function AddListener(IP, Port: AnsiString): TWebserverListener;
+    function AddListener(IP, Port: string): TWebserverListener;
     function RemoveListener(Listener: TWebserverListener): Boolean;
     procedure Accept(Sock: TSocket; IsSSL: Boolean; SSLContext: TAbstractSSLContext);
     procedure FreeConnection(Connection: THTTPConnection);
@@ -198,12 +180,12 @@ uses
 //  webservercgi,
   base64;
 
-function ProcessHandshakeString(const Input: AnsiString): AnsiString;
+function ProcessHandshakeString(const Input: string): string;
 var
   SHA1: TSHA1Context;
-  hash: AnsiString;
+  hash: string;
 
-  procedure ShaUpdate(s: AnsiString);
+  procedure ShaUpdate(s: string);
   begin
     SHA1Update(SHA1, s[1], length(s));
   end;
@@ -218,15 +200,15 @@ begin
   ShaUpdate(Input+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11');
 
   SHA1Final(SHA1, PSHA1Digest(@hash[1])^);
-  result:=EncodeStringBase64(hash);
+  result:=string(EncodeStringBase64(AnsiString(hash)));
 end;
 
-function ProcessHandshakeStringV0(const Input: AnsiString): AnsiString;
+function ProcessHandshakeStringV0(const Input: string): string;
 // concatenates numbers found in input and divides the resulting number by the number of spaces
-// returns a 4 byte AnsiString
+// returns a 4 byte string
 var
   i,j,k: cardinal;
-  s: AnsiString;
+  s: string;
 begin
   result := '';
   j := 0;
@@ -253,20 +235,21 @@ begin
     j := k; // wtf
 
   for i:=0 to 3 do
-  result := result + AnsiChar(PByteArray(@j)^[3-i]);
+  result := result + Char(PByteArray(@j)^[3-i]);
 end;
 
-function MD5ofStr(str: AnsiString): AnsiString;
-type
-  TDigestString = array[0..15] of Char;
+function MD5ofStr(str: string): string;
 var
-  tempstr: TDigestString;
+  i: Integer;
+  tempstr: TMDDigest;
 begin
-  tempstr:=TDigestString(MDString(str, MD_VERSION_5));
-  result:=tempstr;
+  tempstr:=MDString(AnsiString(str), MD_VERSION_5);
+  SetLength(result, Length(tempstr));
+  for i:=0 to Length(tempstr)-1 do
+  result[i + 1]:=Char(tempstr[i]);
 end;
 
-function CreateHeader(opcode: Byte; Length:Int64): AnsiString;
+function CreateHeader(opcode: Byte; Length:Int64): string;
 begin
   if Length>125 then
     SetLength(Result, 4)
@@ -321,7 +304,7 @@ begin
     CreateSocket;
     FSock.EnableReuse(True);
     SetLinger(true, 1000);
-    bind(FIP, FPort);
+    bind(AnsiString(FIP), AnsiString(FPort));
     listen;
     x:=0;
     AcceptError:=False;
@@ -336,7 +319,7 @@ begin
           x := fpfcntl(ClientSock, F_GETFL, 0);
           if x<0 then
           begin
-            dolog(llError, FIP+':'+FPort+': Could not F_GETFL for '+IntToStr(ClientSock));
+            dolog(llError, FIP+':'+FPort+': Could not F_GETFL for '+string(IntToStr(ClientSock)));
             continue;
           end else begin
             x := fpfcntl(ClientSock, F_SetFl, x or O_NONBLOCK);
@@ -360,7 +343,7 @@ begin
         end;
       end;
       except
-        on e: Exception do dolog(llError, e.Message);
+        on e: Exception do dolog(llError, string(e.Message));
       end;
     until Terminated;
     FSock.CloseSocket;
@@ -369,7 +352,7 @@ begin
   FSock.Free;
 end;
 
-constructor TWebserverListener.Create(Parent: TWebserver; IP, Port: AnsiString);
+constructor TWebserverListener.Create(Parent: TWebserver; IP, Port: string);
 begin
   FIP:=IP;
   FParent:=Parent;
@@ -389,7 +372,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TWebserverListener.EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: AnsiString);
+procedure TWebserverListener.EnableSSL(PrivateKeyFile, CertificateFile, CertPassword: string);
 begin
   if (not Assigned(FSSLContext)) or (FSSL) then
     Exit;
@@ -397,7 +380,7 @@ begin
   FSSL:=FSSLContext.Enable(PrivateKeyFile, CertificateFile, CertPassword);
 end;
 
-function TWebserverListener.SetSSLCiphers(const Ciphers: AnsiString): Boolean;
+function TWebserverListener.SetSSLCiphers(const Ciphers: string): Boolean;
 begin
   {$IFDEF OPENSSL_SUPPORT}
   if FSSL and (FSSLContext is TOpenSSLContext) then
@@ -412,7 +395,7 @@ end;
 procedure THTTPConnection.ProcessRequest;
 var
   p: TEpollWorkerThread;
-  newtarget: UnicodeString;
+  newtarget: string;
 begin
   try
     if FGotHeader then
@@ -446,7 +429,7 @@ begin
         Exit;
       end;
 
-      FHost:=FServer.SiteManager.GetSite(UnicodeString(FHeader.header['Host']));
+      FHost:=FServer.SiteManager.GetSite(string(FHeader.header['Host']));
 
       if not Assigned(FHost) then
       begin
@@ -465,8 +448,8 @@ begin
         Exit;
       end; }
 
-      target := UnicodeStringReplace(FHeader.url, '/./', '/', [rfReplaceAll]);
-      target := UnicodeStringReplace(target, '//', '/', [rfReplaceAll]);
+      target := stringReplace(FHeader.url, '/./', '/', [rfReplaceAll]);
+      target := stringReplace(target, '//', '/', [rfReplaceAll]);
 
       (*
       if not URLPathToAbsolutePath(target, '/', target) then
@@ -511,7 +494,7 @@ begin
   except
     on E: Exception do
     begin
-      dolog(llError, GetPeerName+': Exception in ProcessRequest: '+ E.Message);
+      dolog(llError, GetPeerName+': Exception in ProcessRequest: '+ string(E.Message));
       Close;
     end;
   end;
@@ -536,7 +519,7 @@ end;
 
 procedure THTTPConnection.UpgradeToWebsocket;
 var
-  s,s2: AnsiString;
+  s,s2: string;
 
 begin
   fkeepalive:=False;
@@ -623,15 +606,9 @@ end;
 
 procedure THTTPConnection.SendReply;
 var
-  s: AnsiString;
-  ATarget, params: UnicodeString;
-  Len: Integer;
-  Data: Pointer;
+  ATarget, params: string;
   LastModified: TDateTime;
-  ARangeStart, ARangeLen: Cardinal;
-  FFile: UnicodeString;
-  F: File;
-  Buffer: array[0..4096 - 1] of Byte;
+  FFile: string;
 begin
   FPathUrl:='';
 
@@ -644,12 +621,11 @@ begin
       FHeader.parameters:=params;
   end;
 
-  if not URLPathToAbsolutePath(target, FHost.Path + 'web', s) then
+  if not URLPathToAbsolutePath(target, FHost.Path + 'web', FFile) then
   begin
     SendStatusCode(403);
     Exit;
   end;
-  FFile:=s;
 
   if (Length(target)>0) and (target[Length(Target)]='/') then
   begin
@@ -691,8 +667,6 @@ begin
     SendStatusCode(500);
     Exit;
   end;
-
-  s := '';
 
   SendFile(GetFileMIMEType(FFile), FFile);
 
@@ -749,12 +723,10 @@ end;
 
 procedure THTTPConnection.SendStatusCode(const Code: Word);
 var
-  s: UnicodeString;
-  Title, Description, Host: AnsiString;
-  gzip: Boolean;
+  s, Title, Description, Host: string;
 begin
   GetHTTPStatusCode(Code, Title, Description);
-  Title:=IntToStr(Code)+' '+Title;
+  Title:=string(IntToStr(Code))+' '+Title;
   if Assigned(FHost) then
     s:=FHost.GetCustomStatusPage(Code)
   else
@@ -762,13 +734,13 @@ begin
 
   if s<>'' then
   begin
-    gzip:=False;
     SendFile(GetFileMIMEType(s), s, Title);
+    Exit;
   end;
 
   Host:=FHeader.header['Host'];
   if Host = '' then
-    Host:='besenws';
+    Host:='chakraws';
 
   if Description = '' then
     Description:='No information available';
@@ -839,7 +811,7 @@ begin
 end;
 
 function THTTPConnection.CheckTimeout: Boolean;
-var s: AnsiString;
+var s: string;
 begin
   case FVersion of
     wvNone, wvUnknown:
@@ -866,7 +838,7 @@ begin
       if (longword(FServer.Ticks - FIdleTime) > FPingIdleTime) and (FLastPing = 0) then
       begin
         FLastPing:=DateTimeToTimeStamp(Now).Time;
-        s:=IntToStr(FLastPing);
+        s:=string(IntToStr(FLastPing));
         SendRaw(CreateHeader(9, length(s))+s);
         FIdleTime:=FServer.Ticks;
       end;
@@ -890,13 +862,13 @@ begin
       result:=True;
       FGotHeader:=FHeader.readstr(FInBuffer);
       if FGotHeader then
-        FContentLength:=StrToIntDef(FHeader.header['Content-Length'], 0);
+        FContentLength:=StrToIntDef(ansistring(FHeader.header['Content-Length']), 0);
       Exit;
     end;
   end else
   begin
     if FContentLength = -1 then
-      FContentLength:=StrToIntDef(FHeader.header['Content-Length'], 0);
+      FContentLength:=StrToIntDef(ansistring(FHeader.header['Content-Length']), 0);
     if FContentLength>0 then
     begin
       CheckMessageBody;
@@ -915,7 +887,7 @@ end;
 procedure THTTPConnection.ProcessHixie76;
 var
   i: Integer;
-  s: AnsiString;
+  s: string;
 begin
   while Length(FInBuffer)>0 do
   begin
@@ -999,7 +971,7 @@ end;
 procedure THTTPConnection.ProcessRFC;
 var
   i, j: Integer;
-  s: AnsiString;
+  s: string;
   FrameHeader: TWebsocketFrame;
 begin
   while Length(FInBuffer)>1 do
@@ -1076,7 +1048,7 @@ begin
         try
           // edge doesn't include ping string?
           if s<>'' then
-            FLag:=longword(DateTimeToTimeStamp (Now).time - (StrToInt(s)))
+            FLag:=longword(DateTimeToTimeStamp (Now).time - StrToInt(ansistring(s)))
           else if FLastPing <> 0 then
             FLag:=DateTimeToTimeStamp(Now).Time - FLastPing;
           FLastPing:=0;
@@ -1084,7 +1056,7 @@ begin
         except
           on e: Exception do
           begin
-            dolog(llError, GetPeerName+': send invalid pong reply ' + s + ' '+e.Message);
+            dolog(llError, GetPeerName+': send invalid pong reply ' + s + ' '+string(e.Message));
             Close;
           end;
         end;
@@ -1093,63 +1065,13 @@ begin
   end;
 end;
 
-procedure THTTPConnection.GetCGIEnvVars(Callback: TCGIEnvCallback);
-var
-  i: Integer;
-  a, b: AnsiString;
-begin
-  for i:=0 to FHeader.header.Count-1 do
-  begin
-    FHeader.header.Get(i, a, b);
-    a:='HTTP_' + Uppercase(StringReplace(a, '-', '_', [rfReplaceAll]));
-    Callback(a, b);
-  end;
-
-  Callback('CONTENT_LENGTH', FHeader.header['Content-Length']);
-  Callback('CONTENT_TYPE', FHeader.header['Content-Type']);
-  Callback('GATEWAY_INTERFACE', 'CGI/1.1');
-  //'PATH_INFO'
-  //'PATH_TRANSLATED'
-  Callback('QUERY_STRING', FHeader.parameters);
-  Callback('REMOTE_ADDR', GetRemoteIP);
-  Callback('REMOTE_HOST', GetPeerName);
-  // 'REMOTE_IDENT'
-  Callback('REQUEST_METHOD', FHeader.action);
-  Callback('SCRIPT_NAME', target);
-  if FPathUrl <> '' then
-    Callback('PATH_INFO', FPathUrl);
-  a:=FHeader.header['Host'];
-  if a<>'' then
-  begin
-    if Pos(':', a)>0 then
-    begin
-      b:=Copy(a, Pos(':', a)+1, Length(a));
-      Delete(a, Pos(':', a), Length(b)+1);
-    end else b:='80';
-    Callback('SERVER_NAME', a);
-    Callback('SERVER_PORT', b);
-  end else
-  begin
-    Callback('SERVER_NAME', '127.0.0.1');
-    Callback('SERVER_PORT', '80');
-  end;
-  Callback('SERVER_PROTOCOL', FHeader.version);
-  Callback('SERVER_SOFTWARE', FullServerName);
-  Callback('SERVER_SIGNATURE', FullServerName);
-  Callback('DOCUMENT_ROOT', FHost.Path);
-  Callback('REQUEST_SCHEME', 'http');
-  Callback('SCRIPT_FILENAME', FHost.Path + target);
-  Callback('REQUEST_URI', FHeader.url);
-  Callback('REDIRECT_STATUS', FHeader.Url);
-end;
-
 procedure THTTPConnection.CheckMessageBody;
 var
   finished: Boolean;
-  s: AnsiString;
+  s: string;
 begin
   if FContentLength = -1 then
-    FContentLength:=StrToIntDef(FHeader.header['Content-Length'], 0);
+    FContentLength:=StrToIntDef(ansistring(FHeader.header['Content-Length']), 0);
   if FContentLength<=0 then
     Exit;
 
@@ -1220,7 +1142,7 @@ begin
   end;
 end;
 
-procedure THTTPConnection.SendWS(data: AnsiString; Flush: Boolean);
+procedure THTTPConnection.SendWS(data: string; Flush: Boolean);
 begin
   case FVersion of
     wvNone,
@@ -1231,13 +1153,13 @@ begin
   end;
 end;
 
-procedure THTTPConnection.SendContent(mimetype, data: AnsiString;
-  result: AnsiString; Flush: Boolean);
+procedure THTTPConnection.SendContent(mimetype, data: string;
+  result: string; Flush: Boolean);
 begin
   if mimetype<>'' then
     freply.header.add('Content-Type', mimetype);
   if Length(data)>0 then
-    freply.header.add('Content-Length', IntToStr(length(data)));
+    freply.header.add('Content-Length', string(IntToStr(length(data))));
 
   if FHeader.action = 'HEAD' then
     SendRaw(freply.build(result), Flush)
@@ -1257,8 +1179,8 @@ begin
     Close;
 end;
 
-procedure THTTPConnection.SendFile(mimetype: AnsiString;
-  FileName: UnicodeString; result: AnsiString);
+procedure THTTPConnection.SendFile(mimetype: string;
+  FileName: string; result: string);
 var
   F: File;
   Buffer: array[0..4096 - 1] of Byte;
@@ -1274,7 +1196,7 @@ begin
   try
     if mimetype<>'' then
       freply.header.add('Content-Type', mimetype);
-    freply.header.add('Content-Length', IntToStr(FileSize(F)));
+    freply.header.add('Content-Length', string(IntToStr(FileSize(F))));
 
     if FHeader.action = 'HEAD' then
     begin
@@ -1314,7 +1236,7 @@ begin
   FWorker[i]:=AThread;
 end;
 
-constructor TWebserver.Create(const BasePath: AnsiString; IsTestMode: Boolean);
+constructor TWebserver.Create(const BasePath: string; IsTestMode: Boolean);
 begin
 
   FTestMode:=IsTestMode;
@@ -1338,7 +1260,8 @@ begin
 
   SetThreadCount(0);
 
-  dolog(llNotice, 'Total connections accepted: '+IntToStr(FTotalConnections)+', total requests processed: '+IntToStr(FTotalRequests));
+  dolog(llNotice, 'Total connections accepted: '+string(IntToStr(FTotalConnections))
+                 +', total requests processed: '+string(IntToStr(FTotalRequests)));
   FSiteManager.Destroy;
 
   for i:=0 to FCachedConnectionCount-1 do
@@ -1366,7 +1289,7 @@ begin
 
   if Count < FWorkerCount then
   begin
-    dolog(llDebug, 'Decimating threads from '+IntToStr(FWorkerCount)+' to '+IntToStr(Count));
+    dolog(llDebug, 'Decimating threads from '+string(IntToStr(FWorkerCount))+' to '+string(IntToStr(Count)));
     for i:=Count to FWorkerCount-1 do
       FWorker[i].Terminate;
 
@@ -1382,7 +1305,7 @@ begin
   if Count > FWorkerCount then
   begin
     if FWorkerCount <> 0 then // surpress initial message
-    dolog(llDebug, 'Increasing threads from '+IntToStr(FWorkerCount)+' to '+IntToStr(Count));
+    dolog(llDebug, 'Increasing threads from '+string(IntToStr(FWorkerCount))+' to '+string(IntToStr(Count)));
     Setlength(FWorker, Count);
     for i:=FWorkerCount to Count-1 do
       FWorker[i]:=TWebserverWorkerThread.Create(Self);
@@ -1390,7 +1313,7 @@ begin
   end;
 end;
 
-function TWebserver.AddListener(IP, Port: AnsiString): TWebserverListener;
+function TWebserver.AddListener(IP, Port: string): TWebserverListener;
 var
   i: Integer;
 begin
@@ -1441,7 +1364,7 @@ begin
 end;
 
 const
-  SendHelp: AnsiString = 'internal server error';
+  SendHelp: string = 'internal server error';
 
 procedure TWebserver.Accept(Sock: TSocket; IsSSL: Boolean; SSLContext: TAbstractSSLContext);
 var c: THTTPConnection;

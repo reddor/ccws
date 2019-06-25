@@ -1,4 +1,5 @@
 program ccws;
+{$i ccwssettings.inc}
 
 uses
     {$IFDEF UNIX}
@@ -32,9 +33,8 @@ uses
     shutdown: Boolean;
     testmode: Boolean;
     hasforked: Boolean;
-    locallibssl: Boolean;
     oa,na : PSigActionRec;
-    ConfigurationPath: ansistring;
+    ConfigurationPath: string;
 
   procedure ForkToBackground;
   begin
@@ -126,12 +126,11 @@ uses
   procedure CheckParameters;
   var
     i: Integer;
-    s: ansistring;
+    s: string;
     GotPath: Boolean;
   begin
     GotPath:=False;
     testmode:=False;
-    locallibssl:=False;
 
     if ParamCount = 0 then
     begin
@@ -145,9 +144,6 @@ uses
       begin
         if s = '-debug' then
           isdebug:=true
-        else
-        if s = '-locallibssl' then
-          locallibssl:=true
         else
         if s = '-test' then
         begin
@@ -199,7 +195,7 @@ uses
         Limit.rlim_cur:=Limit.rlim_max;
         i:=FpSetRLimit(RLIMIT_NOFILE, @Limit);
         if i=0 then
-          dolog(llNotice, 'Increased RLIMIT_NOFILE from '+IntToStr(OldLimit)+' to '+IntToStr(Limit.rlim_max));
+          dolog(llNotice, 'Increased RLIMIT_NOFILE from '+string(IntToStr(OldLimit))+' to '+string(IntToStr(Limit.rlim_max)));
       end;
     end;
     if i<>0 then
@@ -300,7 +296,7 @@ uses
 
     except
       on e: Exception do
-        dolog(llError, 'A serious program error has occured: '+ e.Message);
+        dolog(llError, 'A serious program error has occured: '+ string(e.Message));
     end;
 
     dolog(llNotice, 'Good bye');
