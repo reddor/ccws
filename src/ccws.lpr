@@ -293,10 +293,9 @@ uses
       FreeMem(na);
       Freemem(oa);
 
-
     except
       on e: Exception do
-        dolog(llError, 'A serious program error has occured: '+ string(e.Message));
+        dolog(llFatal, e.Message);
     end;
 
     dolog(llNotice, 'Good bye');

@@ -331,7 +331,7 @@ begin
 
   Listener:=FServer.AddListener(string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0]))), string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))));
 
-  ListenerObj:=TChakraWebserverListener.Create();
+  ListenerObj:=TChakraWebserverListener.Create(nil, 0, True);
   ListenerObj.FListener:=Listener;
   ListenerObj.FServer:=FServer;
 
@@ -374,7 +374,7 @@ begin
 
   if Assigned(Site) then
   begin
-    Host:=TChakraWebserverSite.Create();
+    Host:=TChakraWebserverSite.Create(nil, 0, true);
     Host.FSite:=Site;
     Host.FServer:=FServer;
     Result:=Host.Instance;
@@ -436,12 +436,8 @@ begin
   FServer:=TWebserver.Create(BasePath, TestMode);
   FInstance:=TChakraInstance.Create(FServer.SiteManager, nil);
   FPath:=FServer.SiteManager.Path;
-  FServerObject:=TChakraWebserverObject.Create();
+  FServerObject:=TChakraWebserverObject.Create(nil, 0, True);
   FServerObject.FServer:=FServer;
-  //FServerObject.InitializeObject;
-  //FInstance.AddEventHandler(FServer.SiteManager.ProcessTick);
-  //FInstance.GarbageCollector.Add(TBESENObject(FServerObject));
-  //FInstance.GarbageCollector.Protect(TBESENObject(FServerObject));
 end;
 
 destructor TWebserverManager.Destroy;
@@ -454,9 +450,6 @@ end;
 function TWebserverManager.Execute(Filename: string): Boolean;
 begin
   result:=False;
-  //lastfile:=FInstance.CurrentFile;
-  //FInstance.SetFilename(ExtractFileName(Filename));
-  //FInstance.ObjectGlobal.put('server', BESENObjectValue(FServerObject), false);
   JsSetProperty(FInstance.Context.Global, 'server', FServerObject.Instance);
   try
     FInstance.ExecuteFile(Filename);
@@ -465,7 +458,6 @@ begin
     on e: Exception do
       FInstance.OutputException(e, 'startup');
   end;
-  //FInstance.CurrentFile:=lastfile;
 end;
 
 procedure TWebserverManager.Process;

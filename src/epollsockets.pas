@@ -153,8 +153,10 @@ type
   protected
     { called inbetween epoll, checks for client timeouts }
     procedure ThreadTick; virtual;
-    { }
+    { Called inside thread before entering thread loop }
     procedure Initialize; virtual;
+    { called after exiting thread loop }
+    procedure Finalize; virtual;
     { overriden thread function }
     procedure Execute; override;
     { add socket - this is called from TEPollSocket-relocate within this thread }
@@ -702,6 +704,7 @@ begin
       dolog(llFatal, 'You should probably restart the server now');
     end;
   end;
+  Finalize;
   j:=High(FSockets);
   while j>=0 do
   begin
@@ -760,6 +763,11 @@ begin
 end;
 
 procedure TEpollWorkerThread.Initialize;
+begin
+
+end;
+
+procedure TEpollWorkerThread.Finalize;
 begin
 
 end;
