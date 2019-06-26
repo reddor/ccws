@@ -40,14 +40,21 @@ type
 
   TChakraInstance = class;
 
+  TChakraTimedEvent = record
+    action: JsValueRef;
+    TimeOut: LongWord;
+    Timestamp: QWord;
+    DoRepeat: Boolean;
+  end;
+
   { TChakraSystemObject }
 
   TChakraSystemObject = class(TNativeRTTIObject)
   private
     FChakraInstance: TChakraInstance;
     FSite: TWebserverSite;
-    function PostTimedTask(Args: PJsValueRefArray; ArgCount: Word;
-      RepeatCount: Integer): JsValueRef;
+    FTimedEvents: array of TChakraTimedEvent;
+    procedure ProcessEvents;
   public
     constructor Create(AInstance: TChakraInstance);
   published
@@ -89,7 +96,7 @@ type
     function ResolveModules(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
     function RunModule(Module: TNodeModule): JsValueRef;
   public
-    constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite; Thread: TThread= nil);
+    constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite);
       reintroduce;
     destructor Destroy; override;
     procedure ExecuteFile(const ScriptFileNames: array of string); overload;
@@ -203,40 +210,43 @@ end;
 
 { TChakraSystemObject }
 
-function TChakraSystemObject.PostTimedTask(Args: PJsValueRefArray;
-  ArgCount: Word; RepeatCount: Integer): JsValueRef;
+procedure TChakraSystemObject.ProcessEvents;
 var
-  AMessage: TTaskMessage;
-  Delay: Cardinal;
-  FuncArgs: array of JsValueRef;
-  I: Integer;
+  i: Integer;
+  CurrentTime: QWord;
 begin
-  Result := JsUndefinedValue;
-
-  if ArgCount < 1 then // function to call, optional: delay, function args
-    raise Exception.Create('Invalid arguments');
-
-  if ArgCount >= 2 then
-    Delay := JsNumberToInt(Args^[1])
-  else
-    Delay := 0;
-
-  if JsGetValueType(Args^[0]) <> JsFunction then
-    raise Exception.Create('Only functions allowed for timed events');
-
-  if ArgCount >= 3 then
+  i:=0;
+  CurrentTime:=GetTickCount64;
+  while i < Length(FTimedEvents) do
   begin
-    Setlength(FuncArgs, ArgCount - 2);
-    for I := 0 to ArgCount - 3 do
-      FuncArgs[I] := Args^[I + 2];
-  end;
+    if FTimedEvents[i].Timestamp + FTimedEvents[i].TimeOut <= CurrentTime then
+    begin
+      if JsGetValueType(FTimedEvents[i].action) = JsFunction then
+      begin
+        JsCallFunction(FTimedEvents[i].action, [], Context.Global);
+      end else
+      begin
+        Context.RunScript(JsStringToUnicodeString(JsValueAsJsString(FTimedEvents[i].action)), UnicodeString('<Timed Event>'));
+      end;
+      if FTimedEvents[i].DoRepeat then
+      begin
+        // adjust for jitter since this method only called in certain intervals
+        FTimedEvents[i].Timestamp:=FTimedEvents[i].Timestamp + FTimedEvents[i].TimeOut;
 
-  AMessage := TTaskMessage.Create(FChakraInstance.Context, Args^[0], nil, FuncArgs, Delay, RepeatCount);
-  try
-    Context.PostMessage(AMessage);
-  except
-    AMessage.Free;
-    raise;
+        // in case we have been blocked for a while, lets skip some so we
+        if FTimedEvents[i].Timestamp < CurrentTime - FTimedEvents[i].TimeOut then
+        begin
+          FTimedEvents[i].Timestamp := CurrentTime - FTimedEvents[i].TimeOut;
+        end;
+        Inc(i);
+      end else
+      begin
+        JsRelease(FTimedEvents[i].action);
+        FTimedEvents[i] := FTimedEvents[Length(FTimedEvents) - 1];
+        Setlength(FTimedEvents, Length(FTimedEvents) - 1);
+      end;
+    end else
+      Inc(i);
   end;
 end;
 
@@ -244,6 +254,7 @@ constructor TChakraSystemObject.Create(AInstance: TChakraInstance);
 begin
   inherited Create(nil, 0, True);
   FChakraInstance:=AInstance;
+  FChakraInstance.AddEventHandler(@ProcessEvents);
 end;
 
 function TChakraSystemObject.log(Arguments: PJsValueRefArray;
@@ -268,14 +279,44 @@ end;
 
 function TChakraSystemObject.setTimeout(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
+var
+  i: Integer;
 begin
-  result:=PostTimedTask(Arguments, CountArguments, 1); // run once
+  result:=JsUndefinedValue;
+  if CountArguments < 1 then
+    Exit;
+
+  i:=Length(FTimedEvents);
+  Setlength(FTimedEvents, i + 1);
+  FTimedEvents[i].DoRepeat:=False;
+  FTimedEvents[i].Timestamp:=GetTickCount64;
+  FTimedEvents[i].action:=Arguments^[0];
+  JsAddRef(FTimedEvents[i].action);
+  if CountArguments > 1 then
+    FTimedEvents[i].TimeOut:=JsNumberToInt(Arguments^[1])
+  else
+    FTimedEvents[i].TimeOut:=0;
 end;
 
 function TChakraSystemObject.setInterval(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
+var
+  i: Integer;
 begin
-  result:=PostTimedTask(Arguments, CountArguments, -1); // run indefinitely
+  result:=JsUndefinedValue;
+  if CountArguments < 1 then
+    Exit;
+
+  i:=Length(FTimedEvents);
+  Setlength(FTimedEvents, i + 1);
+  FTimedEvents[i].DoRepeat:=True;
+  FTimedEvents[i].Timestamp:=GetTickCount64;
+  FTimedEvents[i].action:=Arguments^[0];
+  JsAddRef(FTimedEvents[i].action);
+  if CountArguments > 1 then
+    FTimedEvents[i].TimeOut:=JsNumberToInt(Arguments^[1])
+  else
+    FTimedEvents[i].TimeOut:=0;
 end;
 
 function TChakraSystemObject.eval(Arguments: PJsValueRefArray;
@@ -358,10 +399,10 @@ var
 begin
   if ExtractFileExt(FileName) = '.json' then
     WrapScript := '(function (exports, require, module, __filename, __dirname) {' + sLineBreak +
-      'module.exports = ' + LoadFile(FileName) + ';' + sLineBreak + '})'
+      'module.exports = ' + LoadFile(UTF8Encode(FileName)) + ';' + UnicodeString(sLineBreak) + '})'
   else
     WrapScript := '(function (exports, require, module, __filename, __dirname) {' + sLineBreak +
-      LoadFile(FileName) + sLineBreak + '})';
+      LoadFile(UTF8Encode(FileName)) + sLineBreak + '})';
   Module.FFileName := FileName;
   Module.FHandle := FContext.RunScript(WrapScript, FileName);
   JsSetProperty(Module.Handle, 'exports', JsCreateObject);
@@ -372,7 +413,7 @@ end;
 
 function TChakraInstance.LoadPackage(const FileName: UnicodeString): JsValueRef;
 begin
-  Result := FContext.CallFunction('parse', [StringToJsString(LoadFile(FileName))], JsGetProperty(JsGlobal, 'JSON'));
+  Result := FContext.CallFunction('parse', [StringToJsString(LoadFile(UTF8Encode(FileName)))], JsGetProperty(JsGlobal, 'JSON'));
 end;
 
 function TChakraInstance.Require(CallerModule: TNodeModule;
@@ -553,13 +594,14 @@ begin
 end;
 
 constructor TChakraInstance.Create(Manager: TWebserverSiteManager;
-  Site: TWebserverSite; Thread: TThread);
+  Site: TWebserverSite);
 begin
   inherited Create([ccroEnableExperimentalFeatures,
     ccroDispatchSetExceptionsToDebugger]);
 
   FModules:=TObjectList.Create();
   FManager:=Manager;
+  FSite:=Site;
 
   FBasePath := string(ExtractFilePath(ParamStr(0)));
   FAlias := string(ChangeFileExt(ExtractFileName(ParamStr(0)), ''));
@@ -583,13 +625,8 @@ begin
   FSystemObject:=TChakraSystemObject.Create(Self);
   JsSetProperty(FContext.Global, 'system', FSystemObject.Instance);
 
-  {$IFDEF MSWINDOWS}
-  FOverlapped.hEvent := CreateEvent(nil, False, False, nil);
-  if not CreatePipeEx(FReadPipe, FWritePipe, nil, 4096, FILE_FLAG_OVERLAPPED, 0) then
-  {$ELSE}
-    if Assignpipe(FReadPipe, FWritePipe) <> 0 then
-  {$ENDIF}
-      raise Exception.Create('Could not create message pipe');
+  if Assignpipe(FReadPipe, FWritePipe) <> 0 then
+    raise Exception.Create('Could not create message pipe');
 end;
 
 destructor TChakraInstance.Destroy;

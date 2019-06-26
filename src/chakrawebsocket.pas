@@ -299,17 +299,14 @@ begin
   if Assigned(FInstance) then
     Exit;
 
-  FInstance:=TChakraInstance.Create(FSite.Parent, FSite, self);
+  FInstance:=TChakraInstance.Create(FSite.Parent, FSite);
   FHandler:=TChakraWebsocketHandler.Create(nil, 0, True);
   FHandler.FUrl:=FUrl;
   FHandler.FParentThread:=Self;
 
   JsSetProperty(FInstance.Context.Global, 'handler', FHandler.Instance);
-  //FInstance.ObjectGlobal.put('handler', BESENObjectValue(FHandler), false);
-
   TChakraWebsocketBulkSender.Project('BulkSender');
-  //FInstance.RegisterNativeObject('BulkSender', TChakraWebsocketBulkSender);
-  //FInstance.SetFilename(FFilename);
+
   try
     FInstance.ExecuteFile(FFilename);
   except
