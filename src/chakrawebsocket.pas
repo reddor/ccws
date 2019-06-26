@@ -20,7 +20,6 @@ uses
   webserver;
 
 type
-  //TOpenSSLBesenWorkAroundThread = class(TThread)
   { TChakraWebsocketClient }
 
   { client object - this is created automatically for each new connection and
@@ -401,7 +400,7 @@ begin
   if not client.FIsRequest then
   begin
     try
-       ExecuteCallback(FHandler, 'onDisconnect', [FHandler.Instance, client.Instance]);
+       ExecuteCallback(FHandler, 'onDisconnect', [client.Instance]);
     except
       on e: Exception do
         FInstance.OutputException(e, 'handler.onDisconnect');
@@ -482,7 +481,7 @@ begin
   if aclient.FIsRequest then
   begin
     try
-       ExecuteCallback(FHandler, 'onRequest', [FHandler.Instance, aClient.Instance]);
+       ExecuteCallback(FHandler, 'onRequest', [aClient.Instance]);
     except
       on e: Exception do
         FInstance.OutputException(e, 'handler.onRequest');
@@ -491,7 +490,7 @@ begin
   begin
     aclient.FConnection.UpgradeToWebsocket;
     try
-       ExecuteCallback(FHandler, 'onConnect', [FHandler.Instance, aClient.Instance]);
+       ExecuteCallback(FHandler, 'onConnect', [aClient.Instance]);
       //if Assigned(FHandler.onConnect) then
       //  FHandler.onConnect.Call(BESENObjectValue(FHandler), @a, 1, AResult);
     except

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <title>Test Suite</title>
+  <script src="🍌.js"></script>
+ </head>
+
+ <body onload="startTest()">
+<h1>test</h1>
+
+<script>
+var testsOk = 0;
+var testsFailed = 0;
+function success() {
+	testsOk++;
+	console.log(testsOk, "succeeded", testsFailed, "failed");
+}
+
+function failure(message) {
+	console.log(message);
+	testsFailed++;
+}
+
+function startTest() {
+	console.log("starting test");
+	testUnicodeRequest(success, failure);
+	testUnicodeWebsocket(success, failure);
+}
+</script>
+ </body>
+</html>
