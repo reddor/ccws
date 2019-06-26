@@ -11,6 +11,10 @@ It is made possible with
 Checkout with submodules. Build using Lazarus (or lazbuild), or fpc itself if you manage to figure out the required parameters.
 libChakraCore.so must be placed in /lib and can be obtained [here](https://github.com/Microsoft/ChakraCore/releases/tag/v1.11.10)
 
+## Running
+ccws will fork to the background and run as a service by default. Parameter `-debug` will keep it in foreground.
+It runs just fine in Windows Subsystem For Linux (WSL)!
+
 ## Usage
 ccws is organized in sites, which can be bound to one or more hosts - configuration is done in settings.js, which is worth to look at.
 A site can host one or more websocket scripts which are bound to a specific endpoint. Each script runs in its own context and thread. The global `handler` object has different callbacks that you should implement:
@@ -41,5 +45,5 @@ The `client` object implements various methods and properties for an existing co
 
 Further documentation and implementation details is still work in progress and subject to change. 
 
-## webserver
+## Web Server
 ccws can also serve static files, but you're encouraged to use a different webserver for this purpose, and use a reverse ssl proxy to only expose selected endpoints. 
