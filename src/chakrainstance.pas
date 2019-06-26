@@ -242,7 +242,7 @@ end;
 
 constructor TChakraSystemObject.Create(AInstance: TChakraInstance);
 begin
-  inherited Create();
+  inherited Create(nil, 0, True);
   FChakraInstance:=AInstance;
 end;
 

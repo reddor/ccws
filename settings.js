@@ -1,7 +1,7 @@
 
 function start() {
 	// load default site
-	server.setDefaultSite(loadSite('examples', []));
+	server.setDefaultSite(loadSite('testsuite', []));
 	
 	// to load another site:
 	// loadSite('foobar', ['my-hostname1:18080', '127.0.0.1:18080']);

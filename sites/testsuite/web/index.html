@@ -7,25 +7,84 @@
  </head>
 
  <body onload="startTest()">
-<h1>test</h1>
-
+<h1>ccws tests</h1>
+<div id="output"></div>
 <script>
-var testsOk = 0;
-var testsFailed = 0;
+var currentTest = -1;
+var tests = [];
+
+function addTest(name, proc) {
+	tests.push({name, proc, success: false, message: "did not run"});
+}
+
+function createElement(elementType, innerText, parent) {
+	let result = document.createElement(elementType);
+	innerText && (result.innerText = innerText);
+	parent && parent.appendChild(result);
+	return result;
+}
+
+function generateReport() {
+	s = "";
+	let table = createElement("table");
+	table.border = 1;
+	table.cellPadding = 8;
+	let row = createElement("tr", undefined, table);
+	createElement("th", "Test", row);
+	createElement("th", "Result", row);
+	createElement("th", "Notes", row);
+	let successCounter = 0;
+	for(let t in tests) {
+		row = createElement("tr", undefined, table);
+		createElement("td", tests[t].name, row);
+		createElement("td", tests[t].success ? "Success" : "Failure", row);
+		createElement("td", tests[t].error, row);
+		successCounter += tests[t].success ? 1 : 0;
+		if (!tests[t].success) {
+			row.style.backgroundColor = "#faa";
+		} else {
+			row.style.backgroundColor = "#afa";
+		}
+
+	}
+	let output = document.getElementById("output");
+	output.innerHTML = "";
+	output.appendChild(table);
+	createElement("p", successCounter + "/" + tests.length + " tests successful", output);
+}
+
+function nextTest() {
+	currentTest++;
+	if (tests.length == currentTest) {
+		generateReport();
+		return;
+	}
+
+	if (currentTest > tests.length) {
+		alert("Tests are broken :(");
+		return;
+	}
+	tests[currentTest].proc(success, failure);
+}
+
 function success() {
-	testsOk++;
-	console.log(testsOk, "succeeded", testsFailed, "failed");
+	tests[currentTest].success = true;
+	tests[currentTest].error = "";
+	nextTest();
 }
 
 function failure(message) {
-	console.log(message);
-	testsFailed++;
+	tests[currentTest].success = false;
+	tests[currentTest].error = message;
+	nextTest();
 }
 
 function startTest() {
+	document.getElementById("output").innerHTML = "<h3>Tests are running...</h3>"
 	console.log("starting test");
-	testUnicodeRequest(success, failure);
-	testUnicodeWebsocket(success, failure);
+	addTest("Unicode Request", testUnicodeRequest);
+	addTest("Unicode Websocket", testUnicodeWebsocket);
+	nextTest();
 }
 </script>
  </body>
