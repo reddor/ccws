@@ -27,7 +27,7 @@ const
   ConnectionCacheSize = 2048;
 
 type
-  TWebsocketVersion = (wvNone, wvUnknown, wvHixie76, wvHybi07, wvHybi10, wvRFC);
+  TWebsocketVersion = (wvNone, wvUnknown, wvHixie76, wvHybi07, wvHybi10, wvRFC, wvDelayedRequest);
   TWebsocketMessageType = (wsConnect, wsData, wsDisconnect, wsError);
 
   TWebsocketFrame = record
@@ -77,6 +77,7 @@ type
     function ReadRFCWebsocketFrame(out header: TWebsocketFrame; out HeaderSize: Integer): Boolean;
     procedure ProcessRFC;
   protected
+    procedure AddCallback; override;
     procedure ProcessData(const Buffer: Pointer; BufferLength: Integer); override;
     procedure ProcessRequest;
     procedure ProcessWebsocket;
@@ -93,6 +94,9 @@ type
     procedure SendWS(data: string; Flush: Boolean = True);
     procedure SendContent(mimetype, data: string; result: string = '200 OK'; Flush: Boolean = True);
     procedure SendFile(mimetype: string; FileName: string; result: string = '200 OK');
+    (* called after a regular request is processed by the websocket handler,
+       to return the connection back to the normal worker-pool *)
+    procedure RelocateBack;
     property wsVersion: TWebsocketVersion read FVersion write FVersion;
     property OnWebsocketData: THTTPConnectionDataReceived read FOnWebsocketData write FOnWebsocketData;
     property OnPostData: THTTPConnectionPostDataReceived read FOnPostData write FOnPostData;
@@ -144,6 +148,7 @@ type
     FTotalRequests: Int64;
   protected
     procedure AddWorkerThread(AThread: TWebserverWorkerThread);
+    procedure RelocateBack(Connection: THTTPConnection);
   public
     constructor Create(const BasePath: string; IsTestMode: Boolean = False);
     destructor Destroy; override;
@@ -436,6 +441,8 @@ begin
       p:=TEpollWorkerThread(FHost.GetCustomHandler(FHeader.url));
       if Assigned(p) then
       begin
+        if not CanWebsocket then
+          FVersion:=wvDelayedRequest;
         Relocate(p);
       end else
       if CanWebsocket then
@@ -679,6 +686,19 @@ begin
     SendStatusCode(403);
     Exit;
   end;  *)
+end;
+
+procedure THTTPConnection.RelocateBack;
+begin
+  if FVersion = wvDelayedRequest then
+  begin
+    FVersion:=wvNone;
+    FServer.RelocateBack(self);
+  end else
+  begin
+    dolog(llError, 'Internal error - should not be called in this state');
+    Close;
+  end;
 end;
 
 procedure THTTPConnection.SendStatusCode(const Code: Word);
@@ -1025,6 +1045,13 @@ begin
   end;
 end;
 
+procedure THTTPConnection.AddCallback;
+begin
+  inherited AddCallback;
+  if FInBuffer <> '' then
+    ProcessData(nil, 0);
+end;
+
 procedure THTTPConnection.CheckMessageBody;
 var
   finished: Boolean;
@@ -1095,12 +1122,13 @@ begin
     end;
     wvHixie76: ProcessHixie76();
     wvRFC, wvHybi07, wvHybi10: ProcessRFC();
+    wvDelayedRequest: ;
     else begin
       dolog(llError, 'Unknown state in THTTPConnection.ProcessData');
       Close;
     end;
   end;
-end;
+ end;
 
 procedure THTTPConnection.SendWS(data: string; Flush: Boolean);
 begin
@@ -1164,7 +1192,7 @@ begin
       Exit;
     end;
 
-    SendRaw(freply.Build(result), False);
+    SendRaw(freply.Build(result), True);
 
     repeat
       BlockRead(F, Buffer, SizeOf(Buffer), BytesRead);
@@ -1190,6 +1218,18 @@ begin
   i:=Length(FWorker);
   Setlength(FWorker, i+1);
   FWorker[i]:=AThread;
+end;
+
+procedure TWebserver.RelocateBack(Connection: THTTPConnection);
+var
+  i: Integer;
+begin
+  try
+    FCS.Enter;
+    Connection.Relocate(FWorker[Random(Length(FWorker))]);
+  finally
+    FCS.Leave;
+  end;
 end;
 
 constructor TWebserver.Create(const BasePath: string; IsTestMode: Boolean);

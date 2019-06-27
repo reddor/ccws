@@ -44,10 +44,10 @@ type
     FSSLContext: TAbstractSSLContext;
     FSSL: TAbstractSSLSession;
     FWantSSL: Boolean;
-    { internal callback function that adds socket in parent thread }
-    procedure AddCallback;
     function GetClosed: Boolean;
   protected
+    { internal callback function that adds socket in parent thread }
+    procedure AddCallback; virtual;
     { process incoming data - called by worker thread, has to be overridden }
     procedure ProcessData(const Data: string); overload; virtual;
     { if this function is overriden, the other ProcessData(string) function won't be called unless inherited form is called }

@@ -589,7 +589,9 @@ begin
       FConnection.SendContent(FMimeType, FReply, FReturnType, not FConnection.IsSSL);
       if FConnection.IsSSL then
        TChakraWebsocket(FConnection.Parent).AddConnectionToFlush(FConnection);
-    end;
+      FConnection.RelocateBack;
+      FConnection:=nil;
+    end else
     FConnection.Close;
   end;
 end;
