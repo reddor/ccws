@@ -235,6 +235,7 @@ begin
           Value := PInt64(@base^[offset])^;
           Result := DoubleToJsNumber(Value);
         end;
+        tkAString,
         tkString:
         begin
           Result := StringToJsString(PAnsistring(@base^[Offset])^);
@@ -320,6 +321,7 @@ begin
           Value := TRTTIGetInt64Proc(Method)();
           Result := DoubleToJsNumber(Value);
         end;
+        TkAString,
         tkString:
         begin
           Result := StringToJSString(TRTTIGetAnsiStringProc(Method)());
@@ -555,7 +557,7 @@ begin
   PropName := UTF8Encode(PropInfo^.Name);
   {$IFDEF LowercaseFirstLetter}
   if Length(PropName)>0 then
-    PropName[1]:=UpCase(PropName[1]);
+    PropName[1]:=LowerCase(PropName[1]);
   {$ENDIF}
   ChakraCoreCheck(JsCreatePropertyId(PAnsiChar(PropName), Length(PropName), PropId));
   ChakraCoreCheck(JsDefineProperty(AInstance, PropId, Descriptor, B));
@@ -578,7 +580,7 @@ begin
     for i := 0 to TypeData^.PropCount - 1 do
     begin
       if PropList^[i]^.PropType^.Kind in [tkFloat, tkInteger, tkInt64,
-        tkString, tkWString, tkUString, tkEnumeration] then
+        tkAString, tkWString, tkUString, tkEnumeration] then
       begin
         RegisterRttiProperty(AInstance, PropList^[i]);
       end
