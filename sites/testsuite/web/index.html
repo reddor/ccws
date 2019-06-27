@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <title>Test Suite</title>
   <script src="🍌.js"></script>
+  <script src="xmlhttprequest.js"></script>
  </head>
 
  <body onload="startTest()">
@@ -64,7 +65,13 @@ function nextTest() {
 		alert("Tests are broken :(");
 		return;
 	}
-	tests[currentTest].proc(success, failure);
+	let called = false;
+
+	tests[currentTest].proc(() => {
+		!called && success(); called = true;
+	}, (msg) => {
+		!called && failure(msg); called = true;
+	});
 }
 
 function success() {
@@ -84,6 +91,7 @@ function startTest() {
 	console.log("starting test");
 	addTest("Unicode Request", testUnicodeRequest);
 	addTest("Unicode Websocket", testUnicodeWebsocket);
+	addTest("Server XMLHttpRequest", testXmlHttpRequest);
 	nextTest();
 }
 </script>
