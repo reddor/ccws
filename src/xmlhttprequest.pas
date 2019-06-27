@@ -78,6 +78,8 @@ uses
 
 
 function TXMLHttpRequest.DoConnect(Method, Url: string): boolean;
+var
+  prop: JsValueRef;
 begin
   Result := False;
   if Assigned(FRequest) then
@@ -92,9 +94,13 @@ begin
   FRequest.OnLoading := @RequestLoading;
   FRequest.OnConnect := @RequestConnect;
 
-  FTimeout := Round(JsNumberToDouble(JsGetProperty(Instance, 'timeout')));
+  prop:=JsGetProperty(Instance, 'timeout');
+  if JsGetValueType(prop) = JsNumber then
+    FTimeout := Round(JsNumberToDouble(prop))
+  else
+    FTimeout := 0;
 
-  if FTimeout = 0 then
+  if FTimeout <= 0 then
     FRequest.TimeOut := 60000
   else
     FRequest.TimeOut := FTimeout;
@@ -265,8 +271,8 @@ begin
   if ArgCount < 2 then
     Exit;
 
-  DoConnect(string(JsStringToUnicodeString(Args^[0])),
-    string(JsStringToUnicodeString(Args^[1])));
+  DoConnect(string(JsStringToUnicodeString(JsValueAsJsString(Args^[0]))),
+    string(JsStringToUnicodeString(JsValueAsJsString(Args^[1]))));
   Result := JsTrueValue;
 end;
 
