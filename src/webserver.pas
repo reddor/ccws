@@ -1146,8 +1146,7 @@ procedure THTTPConnection.SendContent(mimetype, data: string;
 begin
   if mimetype<>'' then
     freply.header.add('Content-Type', mimetype);
-  if Length(data)>0 then
-    freply.header.add('Content-Length', string(IntToStr(length(data))));
+  freply.header.add('Content-Length', string(IntToStr(length(data))));
 
   if FHeader.action = 'HEAD' then
     SendRaw(freply.build(result), Flush)
