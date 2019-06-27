@@ -14,6 +14,7 @@ uses
   ChakraCoreClasses,
   ChakraCoreUtils,
   ChakraRTTIObject,
+  ChakraEventObject,
   Compat,
   Console,
   webserverhosts;
@@ -612,8 +613,8 @@ begin
   FContext.Activate;
 
   TConsole.Project('Console');
+  TChakraEvent.Project('Event');
   TXMLHTTPRequest.Project('XMLHttpRequest');
-  TChakraSystemObject.Project('SystemObject');
 
   FConsole := TConsole.Create;
   FConsole.OnLog:=@ConsolePrint;
