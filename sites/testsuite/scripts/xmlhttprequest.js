@@ -1,15 +1,16 @@
 handler.onRequest = function(client) {
 	try {
-	        var r = new XMLHttpRequest();
-	        r.open("GET", "http://raw.githubusercontent.com/reddor/ccws/master/README.md");
+		console.log("Got request for " + client.parameter);
+		var r = new XMLHttpRequest();
+	        r.open("GET", client.parameter);
 	        r.onreadystatechange = function(e) {
-			if(e.readyState == 4) {
-				client.send(e.responseText);
+			if(r.readyState == 4) {
+				client.send(r.responseText);
 				client.disconnect();
 			}
 		};
 	        r.onerror = function(e) {
-			client.send("FAIL: XMLHttpRequest fired error");
+			client.send("FAIL: XMLHttpRequest fired error " + e);
 			client.disconnect();
 		}
 	        r.send();
