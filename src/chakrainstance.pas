@@ -676,6 +676,7 @@ begin
   Inc(FTicks);
   for i:=0 to Length(FHandlers)-1 do
     FHandlers[i]();
+  ReadCallback(0);
 end;
 
 procedure TChakraInstance.AddEventHandler(Handler: TCallbackProc);
