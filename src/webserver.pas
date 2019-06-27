@@ -163,10 +163,6 @@ uses
   buildinfo,
   mimehelper,
   sha1,
-//  BESENStringUtils,
-//  besenwebsocket,
-//  besenwebscript,
-//  webservercgi,
   base64;
 
 function ProcessHandshakeString(const Input: string): string;
