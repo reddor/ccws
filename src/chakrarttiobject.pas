@@ -37,6 +37,7 @@ type
     property ThrowOnInvalidWrite: Boolean read FThrowOnWrite write FThrowOnWrite;
   end;
 
+
 implementation
 
 uses
@@ -555,6 +556,8 @@ begin
   JsSetCallback(Descriptor, 'set', JSNativeFunction(@Native_PropSetCallback),
     PropInfo, True);
   PropName := UTF8Encode(PropInfo^.Name);
+  if Pos('_', PropName) = 1 then
+    Delete(PropName, 1, 1);
   {$IFDEF LowercaseFirstLetter}
   if Length(PropName)>0 then
     PropName[1]:=LowerCase(PropName[1]);
