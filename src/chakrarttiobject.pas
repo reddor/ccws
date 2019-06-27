@@ -26,6 +26,7 @@ type
     FThrowOnRead: Boolean;
     FThrowOnWrite: Boolean;
   protected
+    class function InitializePrototype(AConstructor: JsValueRef): JsValueRef; override;
     class procedure RegisterRttiProperty(AInstance: JsValueRef; PropInfo: PPropInfo);
     class procedure RegisterProperties(AInstance: JsValueRef); override;
     class procedure RegisterMethods(AInstance: JsValueRef); override;
@@ -526,6 +527,15 @@ begin
 end;
 
 { TNativeRTTIObject }
+
+class function TNativeRTTIObject.InitializePrototype(AConstructor: JsValueRef
+  ): JsValueRef;
+begin
+  if Self.ClassParent = TNativeRTTIObject then
+    Result := JsGetProperty(AConstructor, 'prototype')
+  else
+    Result := inherited InitializePrototype(AConstructor);
+end;
 
 class procedure TNativeRTTIObject.RegisterRttiProperty(AInstance: JsValueRef;
   PropInfo: PPropInfo);
