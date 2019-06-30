@@ -46,13 +46,14 @@ type
       FListeners: TFPObjectHashTable;
       function addEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
       function removeEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-      function dispatchEvent(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+      function dispatchEvent(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef; overload;
     protected
       class function InitializePrototype(AConstructor: JsValueRef): JsValueRef; override;
       class procedure RegisterMethods(AInstance: JsValueRef); override;
     public
       constructor Create(Args: PJsValueRef = nil; ArgCount: Word = 0; AFinalize: Boolean = False); override;
       destructor Destroy; override;
+      function dispatchEvent(Event: TChakraEvent): JSValueRef; overload;
     end;
 
 implementation
@@ -156,6 +157,14 @@ begin
   inherited Destroy;
 end;
 
+function TNativeRTTIEventObject.dispatchEvent(Event: TChakraEvent): JSValueRef;
+var
+  params: array[0..0] of JsValueRef;
+begin
+  params[0]:=Event.Instance;
+  result := dispatchEvent(@params, 1);
+end;
+
 function TNativeRTTIEventObject.addEventListener(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
@@ -204,8 +213,8 @@ var
 begin
   result:=JsUndefinedValue;
   if CountArguments < 1 then
-    raise Exception.Create('2 arguments required');
-  o:=TNativeObject(JsGetExternalData(Arguments^[0]));
+    raise Exception.Create('1 argument required');
+  o:=TNativeRTTIObject(JsGetExternalData(Arguments^[0]));
   if not Assigned(o) or not (o is TChakraEvent) then
     raise Exception.Create('Parameter 1 must be of type Event');
   group:=TListenerGroup(FListeners.Items[TChakraEvent(o)._Type]);

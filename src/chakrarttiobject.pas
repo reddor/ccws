@@ -430,6 +430,7 @@ begin
         begin
           PInt64(@base^[offset])^ := Round(val);
         end;
+        tkAString,
         tkString:
         begin
           PAnsiString(@base^[Offset])^ := ansistring(JsStringToUnicodeString(Args^[1]));
@@ -489,6 +490,7 @@ begin
         begin
           TRTTISetInt64Proc(Method)(Round(val));
         end;
+        tkAString,
         tkString:
         begin
           TRTTISetAnsistringProc(Method)(

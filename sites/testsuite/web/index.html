@@ -5,6 +5,7 @@
   <title>Test Suite</title>
   <script src="🍌.js"></script>
   <script src="xmlhttprequest.js"></script>
+  <script src="globalevents.js"></script>
  </head>
 
  <body onload="startTest()">
@@ -13,6 +14,16 @@
 <script>
 var currentTest = -1;
 var tests = [];
+
+function startTest() {
+	document.getElementById("output").innerHTML = "<h3>Tests are running...</h3>"
+	console.log("starting test");
+	addTest("Unicode Request", testUnicodeRequest);
+	addTest("Unicode Websocket", testUnicodeWebsocket);
+	addTest("Server XMLHttpRequest", testXmlHttpRequest);
+	addTest("Global Events", testGlobalEvents);
+	nextTest();
+}
 
 function addTest(name, proc) {
 	tests.push({name, proc, success: false, message: "did not run"});
@@ -66,12 +77,16 @@ function nextTest() {
 		return;
 	}
 	let called = false;
-
+	try {
 	tests[currentTest].proc(() => {
 		!called && success(); called = true;
 	}, (msg) => {
 		!called && failure(msg); called = true;
-	});
+	})
+	}
+	catch(e) {
+		!called && failure("test proc failed");
+	}
 }
 
 function success() {
@@ -86,14 +101,6 @@ function failure(message) {
 	nextTest();
 }
 
-function startTest() {
-	document.getElementById("output").innerHTML = "<h3>Tests are running...</h3>"
-	console.log("starting test");
-	addTest("Unicode Request", testUnicodeRequest);
-	addTest("Unicode Websocket", testUnicodeWebsocket);
-	addTest("Server XMLHttpRequest", testXmlHttpRequest);
-	nextTest();
-}
 </script>
  </body>
 </html>

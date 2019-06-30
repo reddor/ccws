@@ -7,7 +7,6 @@ interface
 uses
     SysUtils,
     Classes,
-    SyncObjs,
     //{$i besenunits.inc},
     webserverhosts,
     chakraevents,
@@ -25,6 +24,7 @@ type
   private
     FServer: TWebserver;
     FSite: TWebserverSite;
+    function GetSiteName: string;
   published
     function addIndexPage(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { addHostname(host) - binds a host to this site. requests made to this host will be processed by this site }
@@ -57,6 +57,7 @@ type
     function readFile(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { unload() - unloads the site. the ecmascript site object will remain in memory until the garbage collector frees it }
     function unload({%H-}Arguments: PJsValueRefArray; {%H-}CountArguments: word): JsValueRef;
+    property SiteName: string read GetSiteName;
   end;
 
   { TChakraWebserverListener }
@@ -170,6 +171,11 @@ begin
 end;
 
 { TChakraWebserverSite }
+
+function TChakraWebserverSite.GetSiteName: string;
+begin
+  result:=FSite.Name;
+end;
 
 function TChakraWebserverSite.addIndexPage(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;

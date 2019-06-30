@@ -16,3 +16,5 @@ handler.onRequest = function(client) {
 	client.send(unicodeString);
 	client.disconnect();
 };
+
+var g = new GlobalEventListener('Test', 'Unicode'); g.addEventListener("ping", e => { g.globalDispatch("pong", "Unicode 😎 Test")});

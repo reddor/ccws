@@ -1,8 +1,7 @@
 handler.onRequest = function(client) {
 	try {
-		console.log("Got request for " + client.parameter);
 		var r = new XMLHttpRequest();
-		let x = client.parameter.split("/");
+	        let x = client.parameter.split("/");
 		// lets not be a generic proxy
 		if ((x[1] != "/dummy.txt") || x.length != 2) {
 			client.disconnect();
@@ -21,7 +20,9 @@ handler.onRequest = function(client) {
 		}
 	        r.send();
 	} catch(e) {
-		client.send("FAIL: " + e.message);
+		client.send("FAIL: " + r.statusText);
 		client.disconnect();
 	}
 }
+
+let g = new GlobalEventListener('Test', 'XMLRequest'); g.addEventListener("ping", e => { g.globalDispatch("pong", "XMLHttpRequest Test")});
