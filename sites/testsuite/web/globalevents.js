@@ -11,3 +11,23 @@ function testGlobalEvents(success, failure) {
 	});
 	r.send();
 }
+
+function testEventListeners(success, failure) {
+	let url = ((location.protocol == "https:") ? "wss" : "ws") + '://'+location.hostname+(location.port ? ':'+location.port: '') + "/test/eventlistener";
+	let ws = new WebSocket(url);
+	let gotsuccess = false;
+	let msg;
+	ws.onopen = function(e) {
+		ws.send("OK");
+	}
+	ws.onmessage = function(e) {
+		if (msg == "") msg = e.data;
+		gotsuccess = (e.data === "OK");
+	};
+	ws.onclose = function(e) {
+		gotsuccess ? success() : failure(msg);
+	};
+	ws.onerror = function(e) {
+		failure("websocket error");
+	};
+}

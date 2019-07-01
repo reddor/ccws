@@ -34,7 +34,7 @@ type
       FCallbacks: array of JsValueRef;
     public
       destructor Destroy; override;
-      procedure Fire(Event: TChakraEvent; ThisObj: JsValueRef);
+      function Fire(Event: TChakraEvent; ThisObj: JsValueRef): Integer;
       procedure AddListener(Callback: JsValueRef);
       procedure RemoveListener(Callback: JsValueRef);
     end;
@@ -57,6 +57,9 @@ type
     end;
 
 implementation
+
+uses
+  logging;
 
 { TChakraEvent }
 
@@ -87,13 +90,19 @@ begin
   inherited Destroy;
 end;
 
-procedure TListenerGroup.Fire(Event: TChakraEvent; ThisObj: JsValueRef);
+function TListenerGroup.Fire(Event: TChakraEvent; ThisObj: JsValueRef): Integer;
 var
   i: Integer;
 begin
+  result:=0;
   for i:=0 to Length(FCallbacks)-1 do
   begin
-    JsCallFunction(FCallbacks[i], [Event.Instance], ThisObj);
+    try
+      JsCallFunction(FCallbacks[i], [Event.Instance], ThisObj);
+      inc(result);
+    except
+      on e: Exception do dolog(llError, 'exception in event: ' + e.Message);
+    end;
   end;
 end;
 
@@ -220,7 +229,7 @@ begin
   group:=TListenerGroup(FListeners.Items[TChakraEvent(o)._Type]);
   if Assigned(group) then
   begin
-    group.Fire(TChakraEvent(o), Instance);
+    result:=IntToJsNumber(group.Fire(TChakraEvent(o), Instance));
   end;
 end;
 

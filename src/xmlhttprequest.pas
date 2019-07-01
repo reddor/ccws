@@ -271,8 +271,8 @@ begin
   if ArgCount < 2 then
     Exit;
 
-  DoConnect(string(JsStringToUnicodeString(JsValueAsJsString(Args^[0]))),
-    string(JsStringToUnicodeString(JsValueAsJsString(Args^[1]))));
+  DoConnect(JsStringToUTF8String(JsValueAsJsString(Args^[0])),
+    JsStringToUTF8String(JsValueAsJsString(Args^[1])));
   Result := JsTrueValue;
 end;
 

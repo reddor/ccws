@@ -448,8 +448,8 @@ end;
 
 destructor TWebserverManager.Destroy;
 begin
-  FInstance.Destroy;
   FServer.Destroy;
+  FInstance.Destroy;
   inherited Destroy;
 end;
 

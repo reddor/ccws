@@ -15,7 +15,6 @@ uses
   ChakraCoreUtils,
   ChakraRTTIObject,
   ChakraEventObject,
-  chakraevents,
   Compat,
   Console,
   webserverhosts;
@@ -119,6 +118,7 @@ function ExecuteCallback(Obj: TNativeObject; FuncName: string; const Args: array
 implementation
 
 uses
+  chakraevents,
   logging,
   xmlhttprequest;
 
@@ -225,7 +225,11 @@ begin
     begin
       if JsGetValueType(FTimedEvents[i].action) = JsFunction then
       begin
-        JsCallFunction(FTimedEvents[i].action, [], Context.Global);
+        try
+          JsCallFunction(FTimedEvents[i].action, [], Context.Global);
+        except
+          on e: Exception do dolog(llError, 'Exception in timed event: ' + e.Message);
+        end;
       end else
       begin
         Context.RunScript(JsStringToUnicodeString(JsValueAsJsString(FTimedEvents[i].action)), UnicodeString('<Timed Event>'));
@@ -634,16 +638,9 @@ end;
 
 destructor TChakraInstance.Destroy;
 begin
-  {$IFDEF MSWINDOWS}
-  CloseHandle(FReadPipe);
-  CloseHandle(FWritePipe);
-  CloseHandle(FOverlapped.hEvent);
-  {$ELSE}
-
-  {$ENDIF}
   FConsole.Free;
-  FContext.Free;
   FModules.Free;
+  FContext.Free;
   inherited Destroy;
 end;
 

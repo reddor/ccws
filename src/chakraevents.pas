@@ -11,7 +11,9 @@ uses
   contnrs,
   ChakraCommon,
   ChakraCore,
+  ChakraCoreClasses,
   ChakraCoreUtils,
+  chakrainstance,
   ChakraEventObject;
 
 
@@ -35,6 +37,7 @@ type
     FEvents: array[0..EventBufferSize-1] of TEventItem;
   public
     constructor Create(Name: string);
+    destructor Destroy; override;
     procedure AddEvent(const Name, Data: string);
     function GetEvent(var Position: Longword; var Name, Data: string): Boolean;
     function GetListenerPosition: Longword;
@@ -47,7 +50,7 @@ type
   TEventListManager = class
   private
     FCS: TCriticalSection;
-    FLists: TFPDataHashTable;
+    FLists: TFPObjectHashTable;
   public
     constructor Create;
     destructor Destroy; override;
@@ -66,6 +69,7 @@ type
     FEvents: TEventList;
     FPosition: Longword;
     FDebug: string;
+    FChakraInstance: TChakraInstance;
   protected
     procedure ProcessEvents;
   public
@@ -81,7 +85,6 @@ var
 implementation
 
 uses
-  chakrainstance,
   logging;
 
 
@@ -90,7 +93,7 @@ uses
 constructor TEventListManager.Create;
 begin
   FCS:=TCriticalSection.Create;
-  FLists:=TFPDataHashTable.Create;
+  FLists:=TFPObjectHashTable.Create(True);
 end;
 
 destructor TEventListManager.Destroy;
@@ -125,7 +128,6 @@ begin
     if List.FRefCount<=0 then
     begin
       FLists.Delete(List.Name);
-      List.Free;
     end;
   finally
     FCS.Leave;
@@ -135,12 +137,11 @@ end;
 { TChakraEventListener }
 
 destructor TChakraEventListener.Destroy;
-var
-  ChakraInstance: TChakraInstance;
 begin
-  ChakraInstance:=Context.Runtime as TChakraInstance;
-  if Assigned(ChakraInstance) then
-    ChakraInstance.RemoveEventHandler(@ProcessEvents);
+  if Assigned(FChakraInstance) then
+  begin
+    FChakraInstance.RemoveEventHandler(@ProcessEvents);
+  end;
   if Assigned(FEvents) then
     EventListManager.ReleaseEventList(FEvents);
   inherited Destroy;
@@ -152,10 +153,6 @@ begin
   result:=JsUndefinedValue;
   if CountArguments < 2 then
     raise Exception.Create('Argument expected');
-  Writeln('dispatch ',
-  JsStringToUTF8String(JsValueAsJsString(Arguments^[0])),
-  ' ',
-  JsStringToUTF8String(JsValueAsJsString(Arguments^[1])));
   if Assigned(FEvents) then
     FEvents.AddEvent(
       JsStringToUTF8String(JsValueAsJsString(Arguments^[0])),
@@ -176,7 +173,6 @@ begin
   begin
     ev:=TChakraEvent.Create(Name);
     ev.AddRef;
-    Writeln('Got ', Name, ' ', Data, ' dbg ', FDebug);
     JsSetProperty(ev.Instance, 'data', StringToJsString(Data));
     dispatchEvent(ev);
     ev.Release;
@@ -196,7 +192,8 @@ begin
   FEvents:=EventListManager.GetEventList(JsStringToUTF8String(JsValueAsJsString(@Args^[0])));
   FPosition:=FEvents.GetListenerPosition;
   inherited Create(Args, ArgCount, AFinalize);
-  (Context.Runtime as TChakraInstance).AddEventHandler(@ProcessEvents);
+  FChakraInstance:=(Context.Runtime as TChakraInstance);
+  FChakraInstance.AddEventHandler(@ProcessEvents);
 end;
 
 { TEventList }
@@ -207,6 +204,18 @@ begin
   FRefCount:=0;
   FEventReadPos:=0;
   FEventWritePos:=0;
+end;
+
+destructor TEventList.Destroy;
+var
+  i: Integer;
+begin
+  for i:=0 to Length(FEvents)-1 do
+  begin
+    FEvents[i].Name:='';
+    FEvents[i].Data:='';
+  end;
+  inherited Destroy;
 end;
 
 procedure TEventList.AddEvent(const Name, Data: string);
