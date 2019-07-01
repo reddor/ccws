@@ -683,6 +683,13 @@ procedure TChakraInstance.AddEventHandler(Handler: TCallbackProc);
 var
   i: Integer;
 begin
+  for i:=0 to Length(FHandlers)-1 do
+  if (TMethod(FHandlers[i]).Code = TMethod(Handler).Code) and
+     (TMethod(FHandlers[i]).Data = TMethod(Handler).Data)  then
+  begin
+    dolog(llError, 'event handler already declared');
+    Exit;
+  end;
   i:=Length(FHandlers);
   Setlength(FHandlers, i+1);
   FHandlers[i]:=Handler;
@@ -694,13 +701,15 @@ var
 begin
   for i:=0 to Length(FHandlers)-1 do
   begin
-    if @FHandlers[i] = @Handler then
+    if (TMethod(FHandlers[i]).Code = TMethod(Handler).Code) and
+       (TMethod(FHandlers[i]).Data = TMethod(Handler).Data)  then
     begin
       FHandlers[i]:=FHandlers[Length(FHandlers)-1];
       Setlength(FHandlers, Length(FHandlers)-1);
       Exit;
     end;
   end;
+  dolog(llError, 'Could not find event handler');
 end;
 
 procedure TChakraInstance.OutputException(e: Exception; Section: string);

@@ -146,6 +146,7 @@ type
     constructor Create(aParent: TWebserver; ASite: TWebserverSite; AFile: string; Url: string);
     destructor Destroy; override;
     procedure AddConnectionToFlush(AConnection: THTTPConnection);
+    procedure RemoveWebsocketClient(Client: TChakraWebsocketClient);
     property Site: TWebserverSite read FSite;
     property AutoUnload: Integer read FAutoUnload write FAutoUnload;
   end;
@@ -299,6 +300,23 @@ begin
     FFLushList.Add(AConnection);
 end;
 
+procedure TChakraWebsocket.RemoveWebsocketClient(Client: TChakraWebsocketClient);
+var
+  i: Integer;
+begin
+  for i:=0 to Length(FClients)-1 do
+  if FClients[i] = Client then
+  begin
+    FClients[i]:=FClients[Length(FClients)-1];
+    Setlength(FClients, Length(FClients) - 1);
+    Client.FConnection:=nil;
+    if Client.Release = 0 then
+      Client.Free;
+    Exit;
+  end;
+  raise Exception.Create('Websocket client not found');
+end;
+
 procedure TChakraWebsocket.LoadInstance;
 begin
   dolog(llDebug, 'Loading Websocket Script at '+StripBasePath(FFilename));
@@ -366,7 +384,7 @@ begin
     Exit;
   end;
 
-  ev:=TChakraDataEvent.Create('data');
+  ev:=TChakraDataEvent.Create('data', False);
   ev.data:=data;
   ev.client:=client;
 
@@ -416,7 +434,7 @@ begin
 
   if not client.FIsRequest then
   begin
-    ev:=TChakraDataEvent.Create('disconnect');
+    ev:=TChakraDataEvent.Create('disconnect', False);
     ev.data:='';
     ev.client:=client;
 
@@ -450,21 +468,12 @@ begin
 
     ev.Free;
   end;
-  client.Release;
 
   i:=FFlushList.IndexOf(Sender);
   if i>=0 then
     FFlushList.Delete(i);
 
-  for i:=0 to Length(FClients)-1 do
-    if FClients[i] = client then
-    begin
-      FClients[i]:=FClients[Length(FClients)-1];
-      Setlength(FClients, Length(FClients)-1);
-      Break;
-    end;
-
-  client.FConnection:=nil;
+  RemoveWebsocketClient(client);
 end;
 
 procedure TChakraWebsocket.Initialize;
@@ -524,9 +533,13 @@ begin
   aclient.FConnection.OnDisconnect:=@ClientDisconnect;
   aclient.FIsRequest:=not aclient.FConnection.CanWebsocket;
 
+  i:=Length(FClients);
+  Setlength(FClients, i+1);
+  FClients[i]:=aClient;
+
   if aclient.FIsRequest then
   begin
-    ev:=TChakraDataEvent.Create('request');
+    ev:=TChakraDataEvent.Create('request', False);
     ev.client:=aClient;
     ev.data:='';
     try
@@ -557,17 +570,23 @@ begin
 
     if (eventsFired = 0) then
     begin
-      THTTPConnection(Client).SendStatusCode(404);
-      THTTPConnection(Client).RelocateBack;
+      if not Client.Closed then
+      begin
+        THTTPConnection(Client).SendStatusCode(404);
+        if THTTPConnection(Client).KeepAlive then
+        begin
+          THTTPConnection(Client).RelocateBack;
+        end else
+        begin
+          THTTPConnection(Client).Close;
+        end;
+      end;
     end;
   end else
   begin
-    i:=Length(FClients);
-    Setlength(FClients, i+1);
-    FClients[i]:=aClient;
     aclient.FConnection.UpgradeToWebsocket;
 
-    ev:=TChakraDataEvent.Create('connect');
+    ev:=TChakraDataEvent.Create('connect', False);
     ev.data:='';
     ev.client:=aclient;
 
@@ -696,17 +715,27 @@ end;
 
 function TChakraWebsocketClient.disconnect(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
+var
+  ws: TChakraWebsocket;
 begin
   Result := JsUndefinedValue;
   if Assigned(FConnection) then
   begin
     if FIsRequest then
     begin
+      ws:=TChakraWebsocket(FConnection.Parent);
       FConnection.SendContent(FMimeType, FReply, FReturnType, not FConnection.IsSSL);
       if FConnection.IsSSL then
-       TChakraWebsocket(FConnection.Parent).AddConnectionToFlush(FConnection);
-      FConnection.RelocateBack;
-      FConnection:=nil;
+       ws.AddConnectionToFlush(FConnection);
+      if (not FConnection.Closed) and FConnection.KeepAlive then
+      begin
+
+        FConnection.RelocateBack;
+      end else
+      begin
+        FConnection.Close;
+      end;
+      ws.RemoveWebsocketClient(Self);
     end else
     FConnection.Close;
   end;

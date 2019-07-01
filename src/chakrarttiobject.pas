@@ -6,6 +6,7 @@ unit ChakraRTTIObject;
 {$M+}
 
 {$define LowercaseFirstLetter}
+{$define DebugUsage}
 
 interface
 
@@ -32,15 +33,26 @@ type
     class procedure RegisterMethods(AInstance: JsValueRef); override;
   public
     constructor Create(Args: PJsValueRef = nil; ArgCount: Word = 0; AFinalize: Boolean = False); override;
+    destructor Destroy; override;
     property ThrowOnInvalidEnum: Boolean read FThrowOnEnum write FThrowOnEnum;
     property ThrowOnInvalidRead: Boolean read FThrowOnRead write FThrowOnRead;
     property ThrowOnInvalidWrite: Boolean read FThrowOnWrite write FThrowOnWrite;
   end;
 
 
+{$ifdef DebugUsage}
+procedure ChakraRTTIObjectDebugDump;
+{$endif DebugUsage}
+
 implementation
 
 uses
+  {$ifdef DebugUsage}
+  syncobjs,
+  contnrs,
+  logging,
+  ChakraEventObject,
+  {$endif DebugUsage}
   rttiutils;
 
 type
@@ -104,6 +116,30 @@ type
     {$endif}
     Methods: TMethodNameRecs;
   end;
+
+{$ifdef DebugUsage}
+var
+  DebugCS: TCriticalSection;
+  DebugInfo: TFPDataHashTable;
+
+procedure IterateDebugInfoProc(Item: Pointer; const Key: string; var Continue: Boolean);
+begin
+  doLog(llDebug, Key + ': ' + IntToStr(PtrUint(Item)));
+end;
+
+procedure ChakraRTTIObjectDebugDump;
+begin
+  DebugCS.Enter;
+  try
+    doLog(llDebug, 'RTTI Object Dump:');
+    DebugInfo.Iterate(@IterateDebugInfoProc);
+    doLog(llDebug, '---');
+  finally
+    DebugCS.Leave;
+  end;
+end;
+
+{$endif}
 
 function GetIntValue(Target: Pointer; OrdType: TOrdType): Int64;
 begin
@@ -631,9 +667,38 @@ constructor TNativeRTTIObject.Create(Args: PJsValueRef; ArgCount: Word;
   AFinalize: Boolean);
 begin
   inherited Create(Args, ArgCount, AFinalize);
+  {$ifdef DebugUsage}
+  DebugCS.Enter;
+  try
+    DebugInfo[ClassName]:=Pointer(PtrUInt(DebugInfo[ClassName]) + 1);
+  finally
+    DebugCS.Leave;
+  end;
+  {$endif DebugUsage}
   FThrowOnEnum:=True;
   FThrowOnRead:=True;
   FThrowOnWrite:=True;
 end;
 
+destructor TNativeRTTIObject.Destroy;
+begin
+  {$ifdef DebugUsage}
+  DebugCS.Enter;
+  try
+    DebugInfo[ClassName]:=Pointer(PtrUInt(DebugInfo[ClassName]) - 1);
+  finally
+    DebugCS.Leave;
+  end;
+  {$endif DebugUsage}
+  inherited Destroy;
+end;
+
+{$ifdef DebugUsage}
+initialization
+  DebugCS:=TCriticalSection.Create;
+  DebugInfo:=TFPDataHashTable.Create;
+finalization
+  DebugCS.Free;
+  DebugInfo.Free;
+{$endif DebugUsage}
 end.

@@ -78,6 +78,7 @@ function nextTest() {
 		return;
 	}
 	let called = false;
+	document.getElementById("output").innerHTML = "Running test " + currentTest + "/" + tests.length;
 	try {
 	tests[currentTest].proc(() => {
 		!called && success(); called = true;

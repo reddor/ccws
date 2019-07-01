@@ -690,7 +690,13 @@ end;
 
 procedure THTTPConnection.RelocateBack;
 begin
-  if FVersion = wvDelayedRequest then
+  if Closed then
+  begin
+    dolog(llDebug, 'Relocating back when connection is terminated');
+    Free;
+    exit;
+  end;
+  if (FVersion in [wvDelayedRequest, wvNone]) then
   begin
     FVersion:=wvNone;
     FServer.RelocateBack(self);

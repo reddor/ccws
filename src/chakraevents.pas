@@ -171,11 +171,13 @@ begin
   if Assigned(FEvents) then
   while FEvents.GetEvent(FPosition, Name, Data) do
   begin
-    ev:=TChakraEvent.Create(Name);
-    ev.AddRef;
-    JsSetProperty(ev.Instance, 'data', StringToJsString(Data));
-    dispatchEvent(ev);
-    ev.Release;
+    ev:=TChakraEvent.Create(Name, False);
+    try
+      JsSetProperty(ev.Instance, 'data', StringToJsString(Data));
+      dispatchEvent(ev);
+    except
+      dolog(llError, 'Exception in ChakraEventListener dispatch');
+    end;
     ev.Free;
   end;
 end;
@@ -183,17 +185,16 @@ end;
 constructor TChakraEventListener.Create(Args: PJsValueRef; ArgCount: Word;
   AFinalize: Boolean);
 begin
-  FDebug:='';
   if ArgCount<1 then
     raise Exception.Create('Argument expected');
   if ArgCount>1 then
     FDebug:=JsStringToUTF8String(JsValueAsJsString(Args[1]));
 
-  FEvents:=EventListManager.GetEventList(JsStringToUTF8String(JsValueAsJsString(@Args^[0])));
-  FPosition:=FEvents.GetListenerPosition;
   inherited Create(Args, ArgCount, AFinalize);
   FChakraInstance:=(Context.Runtime as TChakraInstance);
   FChakraInstance.AddEventHandler(@ProcessEvents);
+  FEvents:=EventListManager.GetEventList(JsStringToUTF8String(JsValueAsJsString(@Args^[0])));
+  FPosition:=FEvents.GetListenerPosition;
 end;
 
 { TEventList }
@@ -222,9 +223,9 @@ procedure TEventList.AddEvent(const Name, Data: string);
 var
   pos: Longword;
 begin
-  pos:=InterLockedIncrement(FEventWritePos) mod EventBufferSize;
-  FEvents[pos-1].Name:=Name;
-  FEvents[pos-1].Data:=Data;
+  pos:=InterLockedIncrement(FEventWritePos);
+  FEvents[(pos-1) mod EventBufferSize].Name:=Name;
+  FEvents[(pos-1) mod EventBufferSize].Data:=Data;
   InterlockedIncrement(FEventReadPos);
 end;
 
