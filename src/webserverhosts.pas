@@ -54,6 +54,7 @@ type
     procedure AddResponseHeader(const name, value: string);
     procedure AddHostAlias(HostName: string);
     procedure AddCustomHandler(url: string; Handler: TEpollWorkerThread);
+    procedure RemoveCustomHandler(url: string);
     procedure AddCustomStatusPage(StatusCode: Word; URI: string);
     procedure ApplyResponseHeader(const Response: THTTPReply);
     procedure AddWhiteListProcess(const Executable: string);
@@ -284,6 +285,11 @@ procedure TWebserverSite.AddCustomHandler(url: string;
   Handler: TEpollWorkerThread);
 begin
   FCustomHandlers.Add(ansistring(url), Handler);
+end;
+
+procedure TWebserverSite.RemoveCustomHandler(url: string);
+begin
+  FCUstomHandlers.Delete(url);
 end;
 
 procedure TWebserverSite.AddCustomStatusPage(StatusCode: Word; URI: string);

@@ -123,6 +123,7 @@ type
 
   TChakraWebsocket = class(TEPollWorkerThread)
   private
+    FCS: TCriticalSection;
     FAutoUnload: Integer;
     FFilename: string;
     FSite: TWebserverSite;
@@ -132,6 +133,7 @@ type
     FIdleTicks,FGCTicks: Integer;
     FUrl: string;
     FFlushList: TObjectList;
+    FEnvVars: TFPStringHashTable;
   protected
     procedure LoadInstance;
     procedure UnloadInstance;
@@ -147,8 +149,11 @@ type
     destructor Destroy; override;
     procedure AddConnectionToFlush(AConnection: THTTPConnection);
     procedure RemoveWebsocketClient(Client: TChakraWebsocketClient);
+    procedure SetEnvVar(Name, Value: string);
+    function GetEnvVar(Name: string): string;
     property Site: TWebserverSite read FSite;
     property AutoUnload: Integer read FAutoUnload write FAutoUnload;
+    property Url: string read FUrl;
   end;
 
 implementation
@@ -278,6 +283,7 @@ end;
 constructor TChakraWebsocket.Create(aParent: TWebserver; ASite: TWebserverSite;
   AFile: string; Url: string);
 begin
+  FCS:=TCriticalSection.Create;
   FSite:=ASite;
   OnConnection:=@AddConnection;
   FFilename:=ASite.Path+'scripts/'+AFile;
@@ -285,13 +291,16 @@ begin
   FURL:=Url;
   FAutoUnload:=20000;
   FFlushList:=TObjectList.Create(False);
+  FEnvVars:=TFPStringHashTable.Create;
   inherited Create(aParent);
 end;
 
 destructor TChakraWebsocket.Destroy;
 begin
   inherited;
+  FCS.Free;
   FFlushList.Free;
+  FEnvVars.Free;
 end;
 
 procedure TChakraWebsocket.AddConnectionToFlush(AConnection: THTTPConnection);
@@ -317,13 +326,33 @@ begin
   raise Exception.Create('Websocket client not found');
 end;
 
+procedure TChakraWebsocket.SetEnvVar(Name, Value: string);
+begin
+  FCS.Enter;
+  try
+    FEnvVars[Name]:=Value;
+  finally
+    FCS.Leave;
+  end;
+end;
+
+function TChakraWebsocket.GetEnvVar(Name: string): string;
+begin
+  FCS.Enter;
+  try
+    Result:=FEnvVars[Name];
+  finally
+    FCS.Leave;
+  end;
+end;
+
 procedure TChakraWebsocket.LoadInstance;
 begin
   dolog(llDebug, 'Loading Websocket Script at '+StripBasePath(FFilename));
   if Assigned(FInstance) then
     Exit;
 
-  FInstance:=TChakraInstance.Create(FSite.Parent, FSite);
+  FInstance:=TChakraInstance.Create(FSite.Parent, FSite, self);
   FHandler:=TChakraWebsocketHandler.Create(nil, 0, True);
   FHandler.FUrl:=FUrl;
   FHandler.FParentThread:=Self;

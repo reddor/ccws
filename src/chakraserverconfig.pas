@@ -15,9 +15,24 @@ uses
     ChakraCommon,
     ChakraCoreUtils,
     ChakraRTTIObject,
+    chakrawebsocket,
     webserver;
 
 type
+
+  { TChakraWebsocketScript }
+
+  TChakraWebsocketScript = class(TNativeRTTIObject)
+  private
+    FWSInstance: TChakraWebsocket;
+  public
+    constructor Create(WebsocketInstance: TChakraWebsocket);
+  published
+    function setEnvVar(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    function getEnvVar(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    function unload(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+  end;
+
   { TChakraWebserverSite }
 
   TChakraWebserverSite = class(TNativeRTTIObject)
@@ -123,7 +138,6 @@ implementation
 
 uses
   mimehelper,
-  chakrawebsocket,
   chakraprocess,
   logging;
 
@@ -135,6 +149,50 @@ begin
     result:=Copy(filename, Length(ServerManager.Path), Length(filename))
   else
     result:=filename;
+end;
+
+{ TChakraWebsocketScript }
+
+constructor TChakraWebsocketScript.Create(WebsocketInstance: TChakraWebsocket);
+begin
+  inherited Create(nil, 0, True);
+  FWSInstance:=WebsocketInstance;
+end;
+
+function TChakraWebsocketScript.setEnvVar(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  result:=JsUndefinedValue;
+  if CountArguments < 2 then
+    raise Exception.Create('Not enough parameters');
+  if Assigned(FWSInstance) then
+    FWSInstance.SetEnvVar(
+      JsStringToUTF8String(JsValueAsJsString(Arguments^[0])),
+      JsStringToUTF8String(JsValueAsJsString(Arguments^[1])));
+end;
+
+function TChakraWebsocketScript.getEnvVar(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  result:=JsUndefinedValue;
+  if CountArguments < 2 then
+    raise Exception.Create('Not enough parameters');
+  if Assigned(FWSInstance) then
+    result:=StringToJsString(FWSInstance.GetEnvVar(JsStringToUTF8String(JsValueAsJsString(Arguments^[0]))))
+  else
+    result:=StringToJsString('');
+end;
+
+function TChakraWebsocketScript.unload(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  result:=JsUndefinedValue;
+  if Assigned(FWSInstance) then
+  begin
+    dolog(llNotice, 'Unloading ' + FWSInstance.url);
+    FWSInstance.Site.RemoveCustomHandler(FWSInstance.url);
+    FreeAndNil(FWSInstance);
+  end;
 end;
 
 { TChakraWebserverListener }
@@ -252,6 +310,7 @@ function TChakraWebserverSite.addWebsocket(Arguments: PJsValueRefArray;
   CountArguments: word): JsValueRef;
 var
   url: string;
+  ws: TChakraWebsocket;
 begin
   result:=JsUndefinedValue;
   if not Assigned(FSite) then
@@ -261,7 +320,10 @@ begin
     Exit;
 
   url:=string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
-  FSite.AddCustomHandler(string(url), TChakraWebsocket.Create(FServer, FSite, string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))), url));
+
+  ws:=TChakraWebsocket.Create(FServer, FSite, string(JsStringToUnicodeString(JsValueAsJsString(Arguments^[1]))), url);
+  result:=TChakraWebsocketScript.Create(ws).Instance;
+  FSite.AddCustomHandler(url, ws);
 end;
 
 function TChakraWebserverSite.addWhitelistExecutable(
@@ -440,7 +502,7 @@ constructor TWebserverManager.Create(const BasePath: string;
 begin
   ServerManager:=Self;
   FServer:=TWebserver.Create(BasePath, TestMode);
-  FInstance:=TChakraInstance.Create(FServer.SiteManager, nil);
+  FInstance:=TChakraInstance.Create(FServer.SiteManager, nil, nil);
   FPath:=FServer.SiteManager.Path;
   FServerObject:=TChakraWebserverObject.Create(nil, 0, True);
   FServerObject.FServer:=FServer;
