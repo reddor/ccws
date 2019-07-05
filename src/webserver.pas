@@ -13,11 +13,9 @@ uses
   epollsockets,
   baseunix,
   unix,
-  linux,
   sockets,
   httphelper,
   DateUtils,
-  contnrs,
   MD5,
   webserverhosts,
   logging;
@@ -1226,8 +1224,6 @@ begin
 end;
 
 procedure TWebserver.RelocateBack(Connection: THTTPConnection);
-var
-  i: Integer;
 begin
   try
     FCS.Enter;

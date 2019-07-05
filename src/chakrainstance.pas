@@ -26,14 +26,14 @@ type
 
   TNodeModule = class
   private
-    FFileName: UnicodeString;
+    FFileName: string;
     FHandle: JsvalueRef;
     FParent: TNodeModule;
     FRequire: JsValueRef;
   public
     constructor Create(AParent: TNodeModule);
 
-    property FileName: UnicodeString read FFileName;
+    property FileName: string read FFileName;
     property Handle: JsValueRef read FHandle;
     property Parent: TNodeModule read FParent;
     property Require: JsValueRef read FRequire;
@@ -54,15 +54,18 @@ type
   private
     FChakraInstance: TChakraInstance;
     FSite: TWebserverSite;
+    FWebsocket: TObject;
     FTimedEvents: array of TChakraTimedEvent;
     procedure ProcessEvents;
   public
-    constructor Create(AInstance: TChakraInstance);
+    constructor Create(AInstance: TChakraInstance; AWebsocket: TObject = nil);
   published
     function log(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function setTimeout(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function setInterval(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function eval(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    function setEnvVar(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    function getEnvVar(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
   end;
 
   { TChakraInstance }
@@ -75,6 +78,7 @@ type
     FContext: TChakraCoreContext;
     FSystemObject: TChakraSystemObject;
     FReadPipe, FWritePipe: THandle;
+    FThread: TThread;
     FProc: TCallbackProc;
     FHandlers: array of TCallbackProc;
     FConsole: TConsole;
@@ -86,18 +90,18 @@ type
     procedure ConsolePrint(Sender: TObject; const Text: UnicodeString;
       Level: TInfoLevel = ilNone);
     function FindModule(ARequire: JsValueRef): TNodeModule; overload;
-    function FindModule(const AFileName: UnicodeString): TNodeModule; overload;
-    procedure LoadModule(Module: TNodeModule; const FileName: UnicodeString);
-    function LoadPackage(const FileName: UnicodeString): JsValueRef;
-    function Require(CallerModule: TNodeModule; const Path: UnicodeString): JsValueRef;
-    function Resolve(const Request, CurrentPath: UnicodeString): UnicodeString;
-    function ResolveDirectory(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
-    function ResolveFile(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
-    function ResolveIndex(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
-    function ResolveModules(const Request: UnicodeString; out FileName: UnicodeString): Boolean;
+    function FindModule(const AFileName: string): TNodeModule; overload;
+    procedure LoadModule(Module: TNodeModule; const FileName: string);
+    function LoadPackage(const FileName: string): JsValueRef;
+    function Require(CallerModule: TNodeModule; const Path: string): JsValueRef;
+    function Resolve(const Request, CurrentPath: string): string;
+    function ResolveDirectory(const Request: string; out FileName: string): Boolean;
+    function ResolveFile(const Request: string; out FileName: string): Boolean;
+    function ResolveIndex(const Request: string; out FileName: string): Boolean;
+    function ResolveModules(const Request: string; out FileName: string): Boolean;
     function RunModule(Module: TNodeModule): JsValueRef;
   public
-    constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite);
+    constructor Create(Manager: TWebserverSiteManager; Site: TWebserverSite; AThread: TThread);
       reintroduce;
     destructor Destroy; override;
     procedure ExecuteFile(const ScriptFileNames: array of string); overload;
@@ -109,6 +113,7 @@ type
     procedure ReadCallback(ATimeout: longword);
     procedure Callback(Proc: TCallbackProc);
     property Context: TChakraCoreContext read FContext;
+    property Thread: TThread read FThread;
   end;
 
 function LoadFile(const FileName: string): string;
@@ -119,6 +124,7 @@ implementation
 
 uses
   chakraevents,
+  chakrawebsocket,
   logging,
   xmlhttprequest;
 
@@ -178,7 +184,7 @@ var
   DataModule: TChakraInstance absolute CallbackState;
   Args: PJsValueRefArray absolute Arguments;
   CallerModule: TNodeModule;
-  Path: UnicodeString;
+  Path: string;
 begin
   Result := JsUndefinedValue;
   try
@@ -189,9 +195,12 @@ begin
       raise Exception.Create('require: module name not a string value');
 
     CallerModule := DataModule.FindModule(Callee);
-    Path := JsStringToUnicodeString(Args^[1]);
+    Path := JsStringToUTF8String(Args^[1]);
+
+    (* // remove warning since this project is linux only
     if PathDelim <> '/' then
       Path := UnicodeStringReplace(Path, '/', PathDelim, [rfReplaceAll]);
+    *)
 
     Result := DataModule.Require(CallerModule, Path);
   except
@@ -256,11 +265,13 @@ begin
   end;
 end;
 
-constructor TChakraSystemObject.Create(AInstance: TChakraInstance);
+constructor TChakraSystemObject.Create(AInstance: TChakraInstance;
+  AWebsocket: TObject);
 begin
   inherited Create(nil, 0, True);
   FChakraInstance:=AInstance;
   FChakraInstance.AddEventHandler(@ProcessEvents);
+  FWebsocket:=AWebsocket;
 end;
 
 function TChakraSystemObject.log(Arguments: PJsValueRefArray;
@@ -336,6 +347,31 @@ begin
                             JsStringToUnicodeString(JsValueAsJsString(Arguments^[0])));
 end;
 
+function TChakraSystemObject.setEnvVar(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  result:=JsUndefinedValue;
+  if CountArguments < 2 then
+    raise Exception.Create('Two arguments required');
+  if not Assigned(FWebsocket) then
+    raise Exception.Create('Only allowed in websocket context');
+  TChakraWebsocket(FWebsocket).SetEnvVar(
+      JsStringToUTF8String(JsValueAsJsString(Arguments^[0])),
+      JsStringToUTF8String(JsValueAsJsString(Arguments^[1])));
+end;
+
+function TChakraSystemObject.getEnvVar(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  result:=JsUndefinedValue;
+  if CountArguments < 1 then
+    raise Exception.Create('One argument required');
+  if not Assigned(FWebsocket) then
+    raise Exception.Create('Only allowed in websocket context');
+  result:=StringToJsString(TChakraWebsocket(FWebsocket).GetEnvVar(
+      JsStringToUTF8String(JsValueAsJsString(Arguments^[0]))));
+end;
+
 { TChakraInstance }
 
 procedure TChakraInstance.ContextLoadModule(Sender: TObject; Module: TChakraModule);
@@ -383,7 +419,7 @@ begin
     end;
 end;
 
-function TChakraInstance.FindModule(const AFileName: UnicodeString
+function TChakraInstance.FindModule(const AFileName: string
   ): TNodeModule;
 var
   I: Integer;
@@ -391,7 +427,7 @@ begin
   Result := nil;
 
   for I := 0 to FModules.Count - 1 do
-    if WideSameText(AFileName, TNodeModule(FModules[I]).FileName) then
+    if SameText(AFileName, TNodeModule(FModules[I]).FileName) then
     begin
       Result := TNodeModule(FModules[I]);
       Break;
@@ -399,16 +435,16 @@ begin
 end;
 
 procedure TChakraInstance.LoadModule(Module: TNodeModule;
-  const FileName: UnicodeString);
+  const FileName: string);
 var
-  WrapScript: UnicodeString;
+  WrapScript: string;
 begin
   if ExtractFileExt(FileName) = '.json' then
     WrapScript := '(function (exports, require, module, __filename, __dirname) {' + sLineBreak +
-      'module.exports = ' + LoadFile(UTF8Encode(FileName)) + ';' + UnicodeString(sLineBreak) + '})'
+      'module.exports = ' + LoadFile(FileName) + ';' + sLineBreak + '})'
   else
     WrapScript := '(function (exports, require, module, __filename, __dirname) {' + sLineBreak +
-      LoadFile(UTF8Encode(FileName)) + sLineBreak + '})';
+      LoadFile(FileName) + sLineBreak + '})';
   Module.FFileName := FileName;
   Module.FHandle := FContext.RunScript(WrapScript, FileName);
   JsSetProperty(Module.Handle, 'exports', JsCreateObject);
@@ -417,15 +453,15 @@ begin
   Module.FRequire := JsSetCallback(Module.Handle, 'require', @Require_Callback, Self);
 end;
 
-function TChakraInstance.LoadPackage(const FileName: UnicodeString): JsValueRef;
+function TChakraInstance.LoadPackage(const FileName: string): JsValueRef;
 begin
   Result := FContext.CallFunction('parse', [StringToJsString(LoadFile(UTF8Encode(FileName)))], JsGetProperty(JsGlobal, 'JSON'));
 end;
 
 function TChakraInstance.Require(CallerModule: TNodeModule;
-  const Path: UnicodeString): JsValueRef;
+  const Path: string): JsValueRef;
 var
-  FileName: UnicodeString;
+  FileName: string;
   Module: TNodeModule;
 begin
   if Assigned(CallerModule) then
@@ -459,11 +495,10 @@ begin
   Result := JsGetProperty(Module.Handle, 'exports');
 end;
 
-function TChakraInstance.Resolve(const Request, CurrentPath: UnicodeString
-  ): UnicodeString;
+function TChakraInstance.Resolve(const Request, CurrentPath: string): string;
 var
-  BasePaths: array[0..1] of UnicodeString;
-  SRequest: UnicodeString;
+  BasePaths: array[0..1] of string;
+  SRequest: string;
   I: Integer;
 begin
   Result := '';
@@ -480,8 +515,9 @@ begin
     'ext' + PathDelim + 'node' + PathDelim + 'lib';
 
   SRequest := Request;
+  (*
   if PathDelim <> '/' then
-    SRequest := UnicodeStringReplace(SRequest, '/', PathDelim, [rfReplaceAll]);
+    SRequest := StringReplace(SRequest, '/', PathDelim, [rfReplaceAll]); *)
 
   for I := Low(BasePaths) to High(BasePaths) do
   begin
@@ -495,19 +531,20 @@ begin
     Result := '';
 end;
 
-function TChakraInstance.ResolveDirectory(const Request: UnicodeString; out
-  FileName: UnicodeString): Boolean;
+function TChakraInstance.ResolveDirectory(const Request: string; out
+  FileName: string): Boolean;
 var
-  Package, Main: UnicodeString;
+  Package, Main: string;
 begin
   FileName := '';
 
   Package := IncludeTrailingPathDelimiter(Request) + 'package.json';
   if FileExists(Package) then
   begin
-    Main := IncludeTrailingPathDelimiter(Request) + JsStringToUnicodeString(JsGetProperty(LoadPackage(Package), 'main'));
+    Main := IncludeTrailingPathDelimiter(Request) + JsStringToUtf8String(JsGetProperty(LoadPackage(Package), 'main'));
+    (*
     if PathDelim <> '/' then
-      Main := UnicodeStringReplace(Main, '/', PathDelim, [rfReplaceAll]);
+      Main := StringReplace(Main, '/', PathDelim, [rfReplaceAll]); *)
 
     Result := ResolveFile(Main, FileName) or ResolveIndex(Main, FileName);
     if Result then
@@ -517,8 +554,8 @@ begin
   Result := ResolveIndex(Request, FileName);
 end;
 
-function TChakraInstance.ResolveFile(const Request: UnicodeString; out
-  FileName: UnicodeString): Boolean;
+function TChakraInstance.ResolveFile(const Request: string; out FileName: string
+  ): Boolean;
 begin
   Result := False;
   FileName := '';
@@ -545,8 +582,8 @@ begin
   end;
 end;
 
-function TChakraInstance.ResolveIndex(const Request: UnicodeString; out
-  FileName: UnicodeString): Boolean;
+function TChakraInstance.ResolveIndex(const Request: string; out
+  FileName: string): Boolean;
 begin
   Result := False;
   FileName := '';
@@ -568,10 +605,10 @@ begin
   end
 end;
 
-function TChakraInstance.ResolveModules(const Request: UnicodeString; out
-  FileName: UnicodeString): Boolean;
+function TChakraInstance.ResolveModules(const Request: string; out
+  FileName: string): Boolean;
 var
-  NodeModulePaths: array of UnicodeString;
+  NodeModulePaths: array of string;
   I: Integer;
 begin
   Result := False;
@@ -600,7 +637,7 @@ begin
 end;
 
 constructor TChakraInstance.Create(Manager: TWebserverSiteManager;
-  Site: TWebserverSite);
+  Site: TWebserverSite; AThread: TThread);
 begin
   inherited Create([ccroEnableExperimentalFeatures,
     ccroDispatchSetExceptionsToDebugger]);
@@ -608,6 +645,7 @@ begin
   FModules:=TObjectList.Create();
   FManager:=Manager;
   FSite:=Site;
+  FThread:=AThread;
 
   FBasePath := string(ExtractFilePath(ParamStr(0)));
   FAlias := string(ChangeFileExt(ExtractFileName(ParamStr(0)), ''));
@@ -662,10 +700,9 @@ begin
   if S <> '' then
     FBasePath := S;
 
-  LoadModule(FMainModule, UTF8ToString(ScriptFileName));
+  LoadModule(FMainModule, ScriptFileName);
   RunModule(FMainModule);
 
-//  FContext.RunScript(UTF8ToString(LoadFile(ScriptFilename)), UTF8ToString(ExtractFileName(ScriptFilename)));
   FBasePath := OldPath;
 end;
 
