@@ -111,8 +111,6 @@ type
     property SSLContext: TAbstractSSLContext read FSSLContext write FSSLContext;
   end;
 
-  { TCustomEpollHandle }
-
   { TCustomEpollHandler }
 
   TCustomEpollHandler = class

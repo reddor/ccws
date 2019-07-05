@@ -20,17 +20,24 @@ uses
   ChakraCoreUtils;
 
 type
+  TRTTIMethodCallback = procedure(AInstance: JsValueRef; name: string; Addr: Pointer) of object;
+
   { TNativeRTTIObject }
   TNativeRTTIObject = class(TNativeObject)
   private
     FThrowOnEnum: Boolean;
     FThrowOnRead: Boolean;
     FThrowOnWrite: Boolean;
+    class procedure RegisterRTTIMethod(AInstance: JsValueRef; name: string; Addr: Pointer);
+    class procedure UnregisterRTTIMethod(AInstance: JsValueRef; name: string; Addr: Pointer);
+    class procedure EnumerateRTTIMethods(AInstance: JsValueRef; Callback: TRTTIMethodCallback);
   protected
     class function InitializePrototype(AConstructor: JsValueRef): JsValueRef; override;
     class procedure RegisterRttiProperty(AInstance: JsValueRef; PropInfo: PPropInfo);
+    class procedure UnregisterRttiProperty(AInstance: JsValueRef; PropInfo: PPropInfo);
     class procedure RegisterProperties(AInstance: JsValueRef); override;
     class procedure RegisterMethods(AInstance: JsValueRef); override;
+    procedure UnregisterProperties;
   public
     constructor Create(Args: PJsValueRef = nil; ArgCount: Word = 0; AFinalize: Boolean = False); override;
     destructor Destroy; override;
@@ -568,6 +575,53 @@ end;
 
 { TNativeRTTIObject }
 
+class procedure TNativeRTTIObject.RegisterRTTIMethod(AInstance: JsValueRef;
+  name: string; Addr: Pointer);
+begin
+  {$IFDEF LowercaseFirstLetter}
+  if Length(Name)>0 then
+    Name[1]:=LowerCase(Name[1]);
+  {$ENDIF}
+  RegisterMethod(AInstance, Name, Addr);
+end;
+
+function NullProc(callee: JsValueRef; isConstructCall: bool; arguments: PJsValueRef; argumentCount: Word;
+    callbackState: Pointer): JsValueRef; {$ifdef WINDOWS}stdcall;{$else}cdecl;{$endif}
+begin
+  result:=JsUndefinedValue;
+end;
+
+class procedure TNativeRTTIObject.UnregisterRTTIMethod(AInstance: JsValueRef;
+  name: string; Addr: Pointer);
+begin
+  //JsSetCallback(Instance: JsValueRef; const CallbackName: UnicodeString; Callback: JsNativeFunction;
+  //  CallbackState: Pointer; UseStrictRules: Boolean = True): JsValueRef; overload;
+  JsSetCallback(AInstance, name, @NullProc, nil);
+end;
+
+class procedure TNativeRTTIObject.EnumerateRTTIMethods(AInstance: JsValueRef;
+  Callback: TRTTIMethodCallback);
+var
+  ClassRef: Pointer;
+  MethodTable: PMethodNameTable;
+  i: integer;
+  Name: UnicodeString;
+begin
+  ClassRef:=Pointer(Self);
+  while Assigned(ClassRef) do
+  begin
+    MethodTable := pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtMethodTable)^);
+    if assigned(MethodTable) then
+    begin
+      for i := 0 to MethodTable^.Count - 1 do
+      begin
+        Callback(AInstance, MethodTable^.Methods[i].Name^, MethodTable^.Methods[i].Address);
+      end;
+    end;
+    ClassRef:=pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtParent)^);
+  end;
+end;
+
 class function TNativeRTTIObject.InitializePrototype(AConstructor: JsValueRef
   ): JsValueRef;
 begin
@@ -592,6 +646,28 @@ begin
     PropInfo, True);
   JsSetCallback(Descriptor, 'set', JSNativeFunction(@Native_PropSetCallback),
     PropInfo, True);
+  PropName := UTF8Encode(PropInfo^.Name);
+  if Pos('_', PropName) = 1 then
+    Delete(PropName, 1, 1);
+  {$IFDEF LowercaseFirstLetter}
+  if Length(PropName)>0 then
+    PropName[1]:=LowerCase(PropName[1]);
+  {$ENDIF}
+  ChakraCoreCheck(JsCreatePropertyId(PAnsiChar(PropName), Length(PropName), PropId));
+  ChakraCoreCheck(JsDefineProperty(AInstance, PropId, Descriptor, B));
+end;
+
+class procedure TNativeRTTIObject.UnregisterRttiProperty(AInstance: JsValueRef;
+  PropInfo: PPropInfo);
+var
+  Descriptor: JsValueRef;
+  PropName: UTF8String;
+  PropId: JsPropertyIdRef;
+  B: bytebool;
+begin
+  Descriptor := JsCreateObject;
+  JsSetProperty(Descriptor, 'configurable', JsFalseValue, True);
+  JsSetProperty(Descriptor, 'enumerable', JsTrueValue, True);
   PropName := UTF8Encode(PropInfo^.Name);
   if Pos('_', PropName) = 1 then
     Delete(PropName, 1, 1);
@@ -638,32 +714,45 @@ begin
 end;
 
 class procedure TNativeRTTIObject.RegisterMethods(AInstance: JsValueRef);
-var
-  ClassRef: Pointer;
-  MethodTable: PMethodNameTable;
-  i: integer;
-  Name: UnicodeString;
 begin
   inherited RegisterMethods(AInstance);
-  ClassRef:=Pointer(Self);
-  while Assigned(ClassRef) do
-  begin
-    MethodTable := pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtMethodTable)^);
-    if assigned(MethodTable) then
+  EnumerateRTTIMethods(AInstance, RegisterRTTIMethod);
+end;
+
+procedure TNativeRTTIObject.UnregisterProperties;
+var
+  i: integer;
+  TypeData: PTypeData;
+  PropList: PPropList;
+  ref: JsValueRef;
+  propRef: JsPropertyIdRef;
+begin
+  TypeData := GetTypeData(Self.ClassInfo);
+  Self.ClassInfo;
+  if not Assigned(TypeData) then
+    Exit;
+  GetMem(PropList, TypeData^.PropCount * SizeOf(Pointer));
+  try
+    GetPropInfos(Self.ClassInfo, PropList);
+    for i := 0 to TypeData^.PropCount - 1 do
     begin
-      for i := 0 to MethodTable^.Count - 1 do
+      if PropList^[i]^.PropType^.Kind in [tkFloat, tkInteger, tkInt64,
+        tkAString, tkWString, tkUString, tkEnumeration] then
       begin
-        // TODO wantfix: test if method signature is correct
-        Name:=UnicodeString(MethodTable^.Methods[i].Name^);
-        {$IFDEF LowercaseFirstLetter}
-        if Length(Name)>0 then
-          Name[1]:=LowerCase(Name[1]);
-        {$ENDIF}
-        RegisterMethod(AInstance, Name,
-          MethodTable^.Methods[i].Address);
+        UnregisterRttiProperty(Instance, PropList^[i]);
+      end
+      else
+      if PropList^[i]^.PropType^.Kind = tkClass then
+      begin
+        if GetTypeData(PropList^[i]^.PropType)^.ClassType.InheritsFrom(
+          TNativeObject) then
+        begin
+          UnregisterRttiProperty(Instance, PropList^[i]);
+        end;
       end;
     end;
-    ClassRef:=pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtParent)^);
+  finally
+    FreeMem(PropList);
   end;
 end;
 
@@ -694,6 +783,12 @@ begin
     DebugCS.Leave;
   end;
   {$endif DebugUsage}
+  try
+    EnumerateRTTIMethods(Instance, UnregisterRTTIMethod);
+    UnregisterProperties;
+  except
+    // swallow exceptions that happen when the whole instance is destroyed..
+  end;
   inherited Destroy;
 end;
 

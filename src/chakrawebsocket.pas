@@ -364,7 +364,7 @@ begin
     FInstance.ExecuteFile(FFilename);
   except
     on e: Exception do
-      FInstance.OutputException(e, 'websocket-init');
+      FInstance.SystemObject.HandleException(e, 'websocket-init');
   end;
 end;
 
@@ -416,33 +416,21 @@ begin
   ev:=TChakraDataEvent.Create('data', False);
   ev.data:=data;
   ev.client:=client;
-
-  try
-     client.dispatchEvent(ev);
-  except
-    on e: Exception do
-      FInstance.OutputException(e, 'client data event');
-  end;
-
-  try
-     FHandler.dispatchEvent(ev);
-  except
-    on e: Exception do
-      FInstance.OutputException(e, 'handler data event');
-  end;
+  client.dispatchEvent(ev);
+  FHandler.dispatchEvent(ev);
 
   try
     ExecuteCallback(FHandler, 'onData', [client.Instance, StringToJsString(data)]);
   except
     on e: Exception do
-      FInstance.OutputException(e, 'handler.onData');
+      FInstance.SystemObject.HandleException(e, 'handler.onData');
   end;
 
   try
     ExecuteCallback(FHandler, 'ondata', [ev.Instance]);
   except
     on e: Exception do
-      FInstance.OutputException(e, 'handler.ondata');
+    FInstance.SystemObject.HandleException(e, 'handler.ondata');
   end;
   ev.Free;
 end;
@@ -466,33 +454,21 @@ begin
     ev:=TChakraDataEvent.Create('disconnect', False);
     ev.data:='';
     ev.client:=client;
-
-    try
-       client.dispatchEvent(ev);
-    except
-      on e: Exception do
-        FInstance.OutputException(e, 'client disconnect event');
-    end;
-
-    try
-       FHandler.dispatchEvent(ev);
-    except
-      on e: Exception do
-        FInstance.OutputException(e, 'handler disconnect event');
-    end;
+    client.dispatchEvent(ev);
+    FHandler.dispatchEvent(ev);
 
     try
        ExecuteCallback(FHandler, 'onDisconnect', [client.Instance]);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.onDisconnect');
+        FInstance.SystemObject.HandleException(e, 'handler.onDisconnect');
     end;
 
     try
        ExecuteCallback(FHandler, 'ondisconnect', [ev.Instance]);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.ondisconnect');
+        FInstance.SystemObject.HandleException(e, 'handler.ondisconnect');
     end;
 
     ev.Free;
@@ -571,12 +547,7 @@ begin
     ev:=TChakraDataEvent.Create('request', False);
     ev.client:=aClient;
     ev.data:='';
-    try
-       eventsFired:=JsNumberToInt(JsValueAsJsNumber(FHandler.dispatchEvent(ev)));
-    except
-      on e: Exception do
-        FInstance.OutputException(e, 'handler request event');
-    end;
+    eventsFired:=JsNumberToInt(JsValueAsJsNumber(FHandler.dispatchEvent(ev)));
 
     try
        ExecuteCallback(FHandler, 'onRequest', [aClient.Instance]);
@@ -584,7 +555,7 @@ begin
          inc(eventsFired);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.onRequest');
+        FInstance.SystemObject.HandleException(e, 'handler.onRequest');
     end;
 
     try
@@ -593,7 +564,7 @@ begin
          inc(eventsFired);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.onrequest');
+        FInstance.SystemObject.HandleException(e, 'handler.onrequest');
     end;
     ev.Free;
 
@@ -618,13 +589,7 @@ begin
     ev:=TChakraDataEvent.Create('connect', False);
     ev.data:='';
     ev.client:=aclient;
-
-    try
-       eventsFired:=JsNumberToInt(JsValueAsJsNumber(FHandler.dispatchEvent(ev)));
-    except
-      on e: Exception do
-        FInstance.OutputException(e, 'handler connect event');
-    end;
+    eventsFired:=JsNumberToInt(JsValueAsJsNumber(FHandler.dispatchEvent(ev)));
 
     try
        ExecuteCallback(FHandler, 'onconnect', [ev.Instance]);
@@ -632,7 +597,7 @@ begin
          inc(eventsFired);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.onconnect');
+        FInstance.SystemObject.HandleException(e, 'handler.onconnect');
     end;
 
     try
@@ -641,7 +606,7 @@ begin
          inc(eventsFired);
     except
       on e: Exception do
-        FInstance.OutputException(e, 'handler.onConnect');
+        FInstance.SystemObject.HandleException(e, 'handler.onConnect');
     end;
     ev.Free;
   end;

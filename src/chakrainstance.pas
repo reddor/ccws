@@ -48,9 +48,22 @@ type
     DoRepeat: Boolean;
   end;
 
+  { TChakraSystemExceptionEvent }
+
+  TChakraSystemExceptionEvent = class(TChakraEvent)
+  private
+    FLocation: string;
+    FMessage: string;
+    FSection: string;
+  published
+    property location: string read FLocation write FLocation;
+    property section: string read FSection write FSection;
+    property message: string read FMessage write FMessage;
+  end;
+
   { TChakraSystemObject }
 
-  TChakraSystemObject = class(TNativeRTTIObject)
+  TChakraSystemObject = class(TNativeRTTIEventObject)
   private
     FChakraInstance: TChakraInstance;
     FSite: TWebserverSite;
@@ -58,7 +71,8 @@ type
     FTimedEvents: array of TChakraTimedEvent;
     procedure ProcessEvents;
   public
-    constructor Create(AInstance: TChakraInstance; AWebsocket: TObject = nil);
+    constructor Create(AInstance: TChakraInstance; AWebsocket: TThread = nil);
+    procedure HandleException(e: Exception; Section: string = '');
   published
     function log(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function setTimeout(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
@@ -112,6 +126,7 @@ type
     procedure OutputException(e: Exception; Section: string = '');
     procedure ReadCallback(ATimeout: longword);
     procedure Callback(Proc: TCallbackProc);
+    property SystemObject: TChakraSystemObject read FSystemObject;
     property Context: TChakraCoreContext read FContext;
     property Thread: TThread read FThread;
   end;
@@ -123,9 +138,10 @@ function ExecuteCallback(Obj: TNativeObject; FuncName: string; const Args: array
 implementation
 
 uses
+  logging,
   chakraevents,
   chakrawebsocket,
-  logging,
+  chakraprocess,
   xmlhttprequest;
 
 function LoadFile(const FileName: string): string;
@@ -237,7 +253,7 @@ begin
         try
           JsCallFunction(FTimedEvents[i].action, [], Context.Global);
         except
-          on e: Exception do dolog(llError, 'Exception in timed event: ' + e.Message);
+          on e: Exception do HandleException(e, '<Timed Event>');
         end;
       end else
       begin
@@ -266,12 +282,29 @@ begin
 end;
 
 constructor TChakraSystemObject.Create(AInstance: TChakraInstance;
-  AWebsocket: TObject);
+  AWebsocket: TThread);
 begin
   inherited Create(nil, 0, True);
   FChakraInstance:=AInstance;
   FChakraInstance.AddEventHandler(@ProcessEvents);
-  FWebsocket:=AWebsocket;
+  if AWebsocket is TChakraWebsocket then
+    FWebsocket:=AWebsocket;
+end;
+
+procedure TChakraSystemObject.HandleException(e: Exception; Section: string);
+var
+  se: TChakraSystemExceptionEvent;
+begin
+  FChakraInstance.OutputException(e, Section);
+  se:=TChakraSystemExceptionEvent.Create('exception');
+  if e is EChakraCoreScript then
+    se.location:=UTF8Encode(EChakraCoreScript(e).ScriptURL)+':'+IntToStr(EChakraCoreScript(e).Line)
+  else
+    se.location:='';
+  se.section:=Section;
+  se.message:=e.Message;
+  dispatchEvent(se);
+  se.Free;
 end;
 
 function TChakraSystemObject.log(Arguments: PJsValueRefArray;
@@ -659,6 +692,7 @@ begin
   TChakraEvent.Project('Event');
   TChakraEventListener.Project('GlobalEventListener');
   TXMLHTTPRequest.Project('XMLHttpRequest');
+  TChakraProcess.Project('Process');
 
   FConsole := TConsole.Create;
   FConsole.OnLog:=@ConsolePrint;
@@ -667,7 +701,7 @@ begin
   FMainModule := TNodeModule.Create(nil);
   FModules.Add(FMainModule);
 
-  FSystemObject:=TChakraSystemObject.Create(Self);
+  FSystemObject:=TChakraSystemObject.Create(Self, AThread);
   JsSetProperty(FContext.Global, 'system', FSystemObject.Instance);
 
   if Assignpipe(FReadPipe, FWritePipe) <> 0 then
@@ -754,7 +788,7 @@ var
   s: string;
 begin
   if e is EChakraCoreScript then
-    s:='['+string(EChakraCoreScript(e).ScriptURL)+':'+string(IntToStr(EChakraCoreScript(e).Line))+'] '+string(EChakraCoreScript(e).Source)+#13#10+string(e.Message)
+    s:='['+string(EChakraCoreScript(e).ScriptURL)+':'+string(IntToStr(EChakraCoreScript(e).Line))+'] ' + e.Message
   else
     s:=string(e.Message);
   if Section <> '' then

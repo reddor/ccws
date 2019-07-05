@@ -79,8 +79,10 @@ begin
     Writeln(Filehandle, s);
     Flush(Filehandle);
   end else
+  begin
     Writeln(StdOut, s);
-
+    Flush(StdOut);
+  end;
   CS.Leave;
 end;
 

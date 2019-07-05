@@ -32,11 +32,14 @@ type
     TListenerGroup = class
     private
       FCallbacks: array of JsValueRef;
+      FName: string;
     public
+      constructor Create(AName: string);
       destructor Destroy; override;
       function Fire(Event: TChakraEvent; ThisObj: JsValueRef): Integer;
       procedure AddListener(Callback: JsValueRef);
       procedure RemoveListener(Callback: JsValueRef);
+      property Name: string read FName write FName;
     end;
 
     { TNativeRTTIEventObject }
@@ -59,6 +62,8 @@ type
 implementation
 
 uses
+  chakrainstance,
+  chakrawebsocket,
   logging;
 
 { TChakraEvent }
@@ -79,6 +84,11 @@ begin
 end;
 
 { TListenerGroup }
+
+constructor TListenerGroup.Create(AName: string);
+begin
+  FName:=AName;
+end;
 
 destructor TListenerGroup.Destroy;
 var
@@ -101,7 +111,7 @@ begin
       JsCallFunction(FCallbacks[i], [Event.Instance], ThisObj);
       inc(result);
     except
-      on e: Exception do dolog(llError, 'exception in event: ' + e.Message);
+      on e: Exception do TChakraInstance(Event.Context.Runtime).SystemObject.HandleException(e, '<event '+FName+'>');
     end;
   end;
 end;
@@ -163,7 +173,7 @@ var
   params: array[0..0] of JsValueRef;
 begin
   params[0]:=Event.Instance;
-  result := dispatchEvent(@params, 1);
+  result:=dispatchEvent(@params, 1);
 end;
 
 function TNativeRTTIEventObject.addEventListener(Arguments: PJsValueRefArray;
@@ -181,7 +191,7 @@ begin
   group:=TListenerGroup(FListeners.Items[s]);
   if not Assigned(group) then
   begin
-    group:=TListenerGroup.Create;
+    group:=TListenerGroup.Create(s);
     FListeners.Items[s]:=group;
   end;
   group.AddListener(Arguments^[1]);

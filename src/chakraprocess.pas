@@ -56,6 +56,7 @@ type
     FParentSite: TWebserverSite;
     FProcess: TProcess;
     FDataHandler: TChakraProcessDataHandler;
+    function GetExitCode: Integer;
     function GetTerminated: Boolean;
   protected
     //procedure ConstructObject(const ThisArgument:TBESENValue;Arguments:PPBESENValues;CountArguments:integer); override;
@@ -70,7 +71,8 @@ type
     function setEnvironment(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function write(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     function writeLine(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-    property terminated: Boolean read GetTerminated;
+    function isTerminated(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    property exitCode: Integer read GetExitCode;
   end;
 
 implementation
@@ -199,6 +201,14 @@ begin
     result:=True;
 end;
 
+function TChakraProcess.GetExitCode: Integer;
+begin
+  if Assigned(FProcess) then
+    result:=FProcess.ExitCode
+  else
+    result:=-1;
+end;
+
 procedure TChakraProcess.StopProcess;
 var
   e: TChakraProcessEvent;
@@ -206,8 +216,12 @@ begin
   if Assigned(FProcess) then
   begin
     if Assigned(FDataHandler) then
-      FreeandNil(FDataHandler);
+    begin
+      FDataHandler.DelayedFree;
+      FDataHandler:=nil;
+    end;
 
+    Writeln(FProcess.ExitCode);
     if FHasTerminated then
       Exit;
 
@@ -218,11 +232,7 @@ begin
     e:=TChakraProcessEvent.Create('terminate');
     e.data:='';
     e.exitCode:=FProcess.ExitCode;
-    try
-      dispatchEvent(e);
-    except
-      dolog(llError, 'Exception in TChakraProcess.terminate event');
-    end;
+    dispatchEvent(e);
     e.Free;
   end;
 end;
@@ -267,9 +277,9 @@ begin
 
   end;
 
-
   FProcess:=TProcess.Create(nil);
   FProcess.Executable:=s;
+  FProcess.Options:=[poStderrToOutPut];
   FProcess.CurrentDirectory:=ExtractFilePath(s);
   for i:=1 to ArgCount-1 do
     FProcess.Parameters.Add(JsStringToUTF8String(JsValueAsJsString(Args[i])));
@@ -364,6 +374,12 @@ begin
   end;
   s:=s + #10;
   FProcess.Input.WriteBuffer(s[1], Length(s));
+end;
+
+function TChakraProcess.isTerminated(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+begin
+  Result:=BooleanToJsBoolean(GetTerminated);
 end;
 
 end.
