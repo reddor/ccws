@@ -51,7 +51,6 @@ uses
   syncobjs,
   contnrs,
   logging,
-  ChakraEventObject,
   {$endif DebugUsage}
   rttiutils;
 
@@ -124,7 +123,7 @@ var
 
 procedure IterateDebugInfoProc(Item: Pointer; const Key: string; var Continue: Boolean);
 begin
-  doLog(llDebug, Key + ': ' + IntToStr(PtrUint(Item)));
+  doLog(llDebug, Key + ': ' + IntToStr({%H-}PtrUint(Item)));
 end;
 
 procedure ChakraRTTIObjectDebugDump;
@@ -640,26 +639,31 @@ end;
 
 class procedure TNativeRTTIObject.RegisterMethods(AInstance: JsValueRef);
 var
+  ClassRef: Pointer;
   MethodTable: PMethodNameTable;
   i: integer;
   Name: UnicodeString;
 begin
   inherited RegisterMethods(AInstance);
-  MethodTable := pointer({%H-}pointer(ptruint({%H-}ptruint(pointer(self)) +
-    vmtMethodTable))^);
-  if assigned(MethodTable) then
+  ClassRef:=Pointer(Self);
+  while Assigned(ClassRef) do
   begin
-    for i := 0 to MethodTable^.Count - 1 do
+    MethodTable := pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtMethodTable)^);
+    if assigned(MethodTable) then
     begin
-      // TODO wantfix: test if method signature is correct
-      Name:=UnicodeString(MethodTable^.Methods[i].Name^);
-      {$IFDEF LowercaseFirstLetter}
-      if Length(Name)>0 then
-        Name[1]:=LowerCase(Name[1]);
-      {$ENDIF}
-      RegisterMethod(AInstance, Name,
-        MethodTable^.Methods[i].Address);
+      for i := 0 to MethodTable^.Count - 1 do
+      begin
+        // TODO wantfix: test if method signature is correct
+        Name:=UnicodeString(MethodTable^.Methods[i].Name^);
+        {$IFDEF LowercaseFirstLetter}
+        if Length(Name)>0 then
+          Name[1]:=LowerCase(Name[1]);
+        {$ENDIF}
+        RegisterMethod(AInstance, Name,
+          MethodTable^.Methods[i].Address);
+      end;
     end;
+    ClassRef:=pointer({%H-}pointer({%H-}ptruint({%H-}ClassRef) + vmtParent)^);
   end;
 end;
 
@@ -670,7 +674,7 @@ begin
   {$ifdef DebugUsage}
   DebugCS.Enter;
   try
-    DebugInfo[ClassName]:=Pointer(PtrUInt(DebugInfo[ClassName]) + 1);
+    DebugInfo[ClassName]:={%H-}Pointer({%H-}PtrUInt(DebugInfo[ClassName]) + 1);
   finally
     DebugCS.Leave;
   end;
@@ -685,7 +689,7 @@ begin
   {$ifdef DebugUsage}
   DebugCS.Enter;
   try
-    DebugInfo[ClassName]:=Pointer(PtrUInt(DebugInfo[ClassName]) - 1);
+    DebugInfo[ClassName]:={%H-}Pointer({%H-}PtrUInt(DebugInfo[ClassName]) - 1);
   finally
     DebugCS.Leave;
   end;

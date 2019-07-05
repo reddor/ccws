@@ -44,16 +44,16 @@ type
     TNativeRTTIEventObject = class(TNativeRTTIObject)
     private
       FListeners: TFPObjectHashTable;
-      function addEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-      function removeEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
-      function dispatchEvent(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef; overload;
     protected
       class function InitializePrototype(AConstructor: JsValueRef): JsValueRef; override;
-      class procedure RegisterMethods(AInstance: JsValueRef); override;
     public
       constructor Create(Args: PJsValueRef = nil; ArgCount: Word = 0; AFinalize: Boolean = False); override;
       destructor Destroy; override;
       function dispatchEvent(Event: TChakraEvent): JSValueRef; overload;
+    published
+      function addEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+      function removeEventListener(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+      function dispatchEvent(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef; overload;
     end;
 
 implementation
@@ -143,14 +143,6 @@ begin
     Result := JsGetProperty(AConstructor, 'prototype')
   else
     Result := inherited InitializePrototype(AConstructor);
-end;
-
-class procedure TNativeRTTIEventObject.RegisterMethods(AInstance: JsValueRef);
-begin
-  RegisterMethod(AInstance, 'addEventListener', @TNativeRTTIEventObject.addEventListener);
-  RegisterMethod(AInstance, 'removeEventListener', @TNativeRTTIEventObject.removeEventListener);
-  RegisterMethod(AInstance, 'dispatchEvent', @TNativeRTTIEventObject.dispatchEvent);
-  inherited RegisterMethods(AInstance);
 end;
 
 constructor TNativeRTTIEventObject.Create(Args: PJsValueRef; ArgCount: Word;
