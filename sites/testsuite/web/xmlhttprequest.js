@@ -7,7 +7,7 @@ function testXmlHttpRequest(success, failure) {
 	//r.setRequestHeader("X-Unicode", "🍕");
 	r.addEventListener("load", function(e) {
 		console.log(r.responseText);
-		r.responseText.indexOf("FAIL:") != 0 ? success() : failure("got "+r.responseText);
+		r.responseText.indexOf("FAIL:") != 0 ? success(r.responseText) : failure(r.responseText);
 	});
 	r.addEventListener("error", function(e) {
 		failure("XMLHttpRequest error");

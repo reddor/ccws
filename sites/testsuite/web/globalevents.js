@@ -3,7 +3,20 @@ function testGlobalEvents(success, failure) {
     var r = new XMLHttpRequest();
 	r.open("GET", "/test/globalevents");
 	r.addEventListener("load", function(e) {
-        r.responseText.indexOf("FAIL:") != 0 ? success() : failure("got "+r.responseText);
+        r.responseText.indexOf("FAIL:") != 0 ? success(r.responseText) : failure(r.responseText);
+        console.log(r.responseText);
+	});
+	r.addEventListener("error", function(e) {
+		failure("XMLHttpRequest error");
+	});
+	r.send();
+}
+
+function testProcess(success, failure) {
+    var r = new XMLHttpRequest();
+	r.open("GET", "/test/process");
+	r.addEventListener("load", function(e) {
+        r.responseText.indexOf("FAIL:") != 0 ? success(r.responseText) : failure(r.responseText);
         console.log(r.responseText);
 	});
 	r.addEventListener("error", function(e) {
@@ -25,7 +38,7 @@ function testEventListeners(success, failure) {
 		gotsuccess = (e.data === "OK");
 	};
 	ws.onclose = function(e) {
-		gotsuccess ? success() : failure(msg);
+		gotsuccess ? success("That worked.") : failure(msg);
 	};
 	ws.onerror = function(e) {
 		failure("websocket error");

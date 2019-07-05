@@ -23,6 +23,7 @@ function startTest() {
 	addTest("Server XMLHttpRequest", testXmlHttpRequest);
 	addTest("Global Events", testGlobalEvents);
 	addTest("EventListener", testEventListeners);
+	addTest("Process", testProcess);
 	nextTest();
 }
 
@@ -50,10 +51,12 @@ function generateReport() {
 	for(let t in tests) {
 		row = createElement("tr", undefined, table);
 		createElement("td", tests[t].name, row);
-		createElement("td", tests[t].success ? "Success" : "Failure", row);
-		createElement("td", tests[t].error, row);
+		createElement("td", !tests[t].started ? "" : (tests[t].success ? "Success" : "Failure"), row);
+		createElement("td", tests[t].message, row).style.fontFamily = "monospace";
 		successCounter += tests[t].success ? 1 : 0;
-		if (!tests[t].success) {
+		if (!tests[t].started) {
+
+		} else if (!tests[t].success) {
 			row.style.backgroundColor = "#faa";
 		} else {
 			row.style.backgroundColor = "#afa";
@@ -67,9 +70,12 @@ function generateReport() {
 }
 
 function nextTest() {
+	if(currentTest>=0)
+		tests[currentTest].started = true;
+	generateReport();
+
 	currentTest++;
 	if (tests.length == currentTest) {
-		generateReport();
 		return;
 	}
 
@@ -78,10 +84,10 @@ function nextTest() {
 		return;
 	}
 	let called = false;
-	document.getElementById("output").innerHTML = "Running test " + currentTest + "/" + tests.length;
+	//document.getElementById("output").innerHTML = "Running test " + currentTest + "/" + tests.length;
 	try {
-	tests[currentTest].proc(() => {
-		!called && success(); called = true;
+	tests[currentTest].proc((msg) => {
+		!called && success(msg); called = true;
 	}, (msg) => {
 		!called && failure(msg); called = true;
 	})
@@ -91,15 +97,15 @@ function nextTest() {
 	}
 }
 
-function success() {
+function success(message) {
 	tests[currentTest].success = true;
-	tests[currentTest].error = "";
+	tests[currentTest].message = message; 
 	nextTest();
 }
 
 function failure(message) {
 	tests[currentTest].success = false;
-	tests[currentTest].error = message;
+	tests[currentTest].message = message;
 	nextTest();
 }
 

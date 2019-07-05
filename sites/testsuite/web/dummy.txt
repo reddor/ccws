@@ -1,1 +1,1 @@
-Success!
+Hello from /dummy.txt

@@ -8,7 +8,7 @@ function testUnicodeRequest(success, failure) {
 	// seems this is illegal after all
 	//r.setRequestHeader("X-Unicode", "🍕");
 	r.addEventListener("load", function(e) {
-		r.responseText === unicodeString ? success() : failure("got "+r.responseText);
+		r.responseText === unicodeString ? success(r.responseText) : failure("got "+r.responseText);
 	});
 	r.addEventListener("error", function(e) {
 		failure("XMLHttpRequest error");
@@ -31,7 +31,7 @@ function testUnicodeWebsocket(success, failure) {
 		}
 	};
 	ws.onclose = function(e) {
-		gotsuccess ? success() : failure(gotmessage ? "message broken in transit" : "no message returned");
+		gotsuccess ? success(unicodeString) : failure(gotmessage ? "message broken in transit" : "no message returned");
 	};
 	ws.onerror = function(e) {
 		failure("websocket error");

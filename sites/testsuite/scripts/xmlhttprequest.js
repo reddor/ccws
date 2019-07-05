@@ -1,9 +1,11 @@
-handler.onRequest = function(client) {
+handler.onRequest = function(client) 
+{
 	try {
 		var r = new XMLHttpRequest();
-	        let x = client.parameter.split("/");
+        let x = client.parameter.split("/");
 		// lets not be a generic proxy
-		if ((x[1] != "/dummy.txt") || x.length != 2) {
+		if ((x[3] != "dummy.txt") || x.length != 4) {
+			client.send("FAIL: bad url "+ client.parameter);
 			client.disconnect();
 			return;
 		}
