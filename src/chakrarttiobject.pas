@@ -582,7 +582,7 @@ begin
   if Length(Name)>0 then
     Name[1]:=LowerCase(Name[1]);
   {$ENDIF}
-  RegisterMethod(AInstance, Name, Addr);
+  RegisterMethod(AInstance, UTF8Decode(Name), Addr);
 end;
 
 function NullProc(callee: JsValueRef; isConstructCall: bool; arguments: PJsValueRef; argumentCount: Word;
