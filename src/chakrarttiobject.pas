@@ -6,7 +6,7 @@ unit ChakraRTTIObject;
 {$M+}
 
 {$define LowercaseFirstLetter}
-{$define DebugUsage}
+{.$define DebugUsage}
 
 interface
 
@@ -605,7 +605,6 @@ var
   ClassRef: Pointer;
   MethodTable: PMethodNameTable;
   i: integer;
-  Name: UnicodeString;
 begin
   ClassRef:=Pointer(Self);
   while Assigned(ClassRef) do
@@ -724,8 +723,6 @@ var
   i: integer;
   TypeData: PTypeData;
   PropList: PPropList;
-  ref: JsValueRef;
-  propRef: JsPropertyIdRef;
 begin
   TypeData := GetTypeData(Self.ClassInfo);
   Self.ClassInfo;

@@ -6,7 +6,8 @@ uses
     cthreads,
     cwstring,
     {$ENDIF}
-    console in 'chakracore/samples/HostSample/Console.pas',
+    Console,
+    blcksock,
     Classes,
     SysUtils,
     webserver,
@@ -14,17 +15,13 @@ uses
     baseunix,
     linux,
     logging,
+    ChakraRTTIObject,
     webserverhosts,
     chakraserverconfig,
     chakraevents,
     chakrainstance,
     epollsockets,
-    buildinfo,
-    {$IFDEF CGISUPPORT}
-    externalproc,
-    fcgibridge,
-    {$ENDIF}
-    sslclass;
+    buildinfo;
 
 {.$R *.res}
 
@@ -273,7 +270,7 @@ begin
       Sleep(20);
       ServerManager.Process;
     end;
-
+    
     dolog(llNotice, 'Shutting down');
     ServerManager.Destroy;
   except
