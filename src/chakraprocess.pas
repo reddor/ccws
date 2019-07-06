@@ -221,7 +221,6 @@ begin
       FDataHandler:=nil;
     end;
 
-    Writeln(FProcess.ExitCode);
     if FHasTerminated then
       Exit;
 
