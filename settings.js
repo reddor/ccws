@@ -1,13 +1,13 @@
-
 function start() {
 	// load default site
 	server.setDefaultSite(loadSite('testsuite', []));
 	
 	// to load another site:
-	// loadSite('foobar', ['my-hostname1:18080', '127.0.0.1:18080']);
+	loadSite('buildslave', ['127.0.0.1:18081']);
 	
 	// bind server to ip address:
 	server.addListener('127.0.0.1', '18080');
+	server.addListener('127.0.0.1', '18081');
 	
 	// set number of worker-threads
 	server.setThreadCount(8);
