@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Foo</title>
+    </head>
+    <style>
+        html, body {
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+        #content {
+            background-color: #000;
+            width: 100%;
+            height: 100%;
+            font-family: monospace;
+            color: #fff;
+        }
+        .line1 {
+            width: 100%;
+            background-color: #222;
+        }
+        .line2 {
+            width: 100%;
+            background-color: #111;
+        }
+    </style>
+    <body>
+        <div id="content"></div>
+
+<script>
+
+let lineCount=0;
+let currentLine;
+
+function colorizeLine(line) {
+    let s = line.innerText;
+    if (s.indexOf("Warning:")>=0) {
+        line.style.color = "#ff0";
+    } else
+    if (s.indexOf("Note:")>=0) {
+        line.style.color = "#8f8";
+    } 
+    if (s == "----------------------------- new build -----------------------------") {
+    //    document.getElementById("content").innerHTML = "";
+    }
+}
+
+function addLine() {
+    let doScroll = (window.innerHeight + window.scrollY) >= document.body.offsetHeight;
+    if(currentLine) colorizeLine(currentLine);
+    currentLine = document.createElement("div");
+    currentLine.className = lineCount % 2 == 0 ? "line1" : "line2";
+    document.getElementById("content").appendChild(currentLine);
+    lineCount++;
+    if (doScroll) window.scrollTo(0,document.body.scrollHeight);
+}
+function processData(data) {
+    let l = data.split("\n");
+    if (!currentLine) addLine();
+    currentLine.innerText += l[0];
+    for(let i=1; i < l.length; i++) {
+        addLine();
+        currentLine.innerText = l[i];
+    }
+}
+
+let url = ((location.protocol == "https:") ? "wss" : "ws") + '://'+location.hostname+(location.port ? ':'+location.port: '') + "/api/build/ccws";
+let ws = new WebSocket(url);
+
+ws.onopen = function(e) {
+	//ws.send("OK");
+}
+ws.onmessage = function(e) {
+	processData(e.data);
+};
+ws.onclose = function(e) {
+
+};
+ws.onerror = function(e) {
+
+};
+
+
+</script>        
+    </body>
+</html>
