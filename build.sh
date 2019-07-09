@@ -18,6 +18,8 @@ if [ "$#" -eq 1 ]
 then
 	if [[ "$1" = "debug" ]]; then
 		DYNAMICPARAMS="-O1 -g -gl -gh -B"
+	elif [[ "$1" = "releasedbg" ]]; then
+		DYNAMICPARAMS="-O3 -g -B"
 	elif [[ "$1" = "clean" ]]; then
 		echo "Cleaning..."
 		rm -f ppu/*.o
