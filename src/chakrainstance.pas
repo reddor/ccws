@@ -139,6 +139,7 @@ implementation
 
 uses
   logging,
+  epollsockets,
   chakraevents,
   chakrawebsocket,
   chakraprocess,
@@ -790,7 +791,8 @@ begin
   if e is EChakraCoreScript then
     s:='['+string(EChakraCoreScript(e).ScriptURL)+':'+string(IntToStr(EChakraCoreScript(e).Line))+'] ' + e.Message
   else
-    s:=string(e.Message);
+    s:=DumpExceptionCallStack(e);
+
   if Section <> '' then
     s:='['+Section+'] '+s;
 

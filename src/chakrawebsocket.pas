@@ -575,6 +575,7 @@ begin
         THTTPConnection(Client).SendStatusCode(404);
         if THTTPConnection(Client).KeepAlive then
         begin
+          aClient.FConnection:=nil;
           THTTPConnection(Client).RelocateBack;
         end else
         begin
@@ -723,11 +724,11 @@ begin
        ws.AddConnectionToFlush(FConnection);
       if (not FConnection.Closed) and FConnection.KeepAlive then
       begin
-
-        FConnection.RelocateBack;
+           FConnection.RelocateBack;
+           FConnection:=nil;
       end else
       begin
-        FConnection.Close;
+          FConnection.Close;
       end;
       ws.RemoveWebsocketClient(Self);
     end else

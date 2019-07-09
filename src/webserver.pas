@@ -697,6 +697,8 @@ begin
   if (FVersion in [wvDelayedRequest, wvNone]) then
   begin
     FVersion:=wvNone;
+    OnDisconnect:=nil;
+    OnWebsocketData:=nil;
     FServer.RelocateBack(self);
   end else
   begin

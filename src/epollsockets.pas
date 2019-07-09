@@ -174,6 +174,8 @@ const
   { Default waiting time for epoll }
   EpollWaitTime = 20;
 
+{ Not really the best place to put this, but a handy function for exception logging }
+function DumpExceptionCallStack(E: Exception): string;
 
 implementation
 
@@ -186,6 +188,23 @@ const
   ClientTickInterval = 1000 div EpollWaitTime;
   { Internal buffer size for a single read() call }
   InternalBufferSize = 65536;
+
+function DumpExceptionCallStack(E: Exception): string;
+var
+  I: Integer;
+  Frames: PPointer;
+begin
+  if E <> nil then 
+  begin
+    Result := 'Exception class: ' + E.ClassName + LineEnding +
+    'Message: ' + E.Message + LineEnding;
+  end else
+    Result := 'Stacktrace:' + LineEnding;
+  Result := Result + BackTraceStrFunc(ExceptAddr);
+  Frames := ExceptFrames;
+  for I := 0 to ExceptFrameCount - 1 do
+    Result := Result + LineEnding + BackTraceStrFunc(Frames[I]);
+end;
 
 { TCustomEpollHandler }
 
@@ -698,8 +717,8 @@ begin
   except
     on E: Exception do
     begin
-      dolog(llFatal, 'Epoll-thread died with unhandled exception: '+string(e.Message));
-      dolog(llFatal, 'You should probably restart the server now');
+      dolog(llFatal, 'BUG: Unhandled exception in epoll worker thread!');
+      dolog(llFatal, DumpExceptionCallStack(e));
     end;
   end;
   Finalize;
