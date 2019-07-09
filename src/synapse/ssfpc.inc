@@ -60,6 +60,8 @@ For IPv6 support you must have new API!
   {$MODE DELPHI}
 {$ENDIF}
 {$H+}
+{$warnings off}
+{$notes off}
 
 {$ifdef FreeBSD}
 {$DEFINE SOCK_HAS_SINLEN}               // BSD definition of scoketaddr
