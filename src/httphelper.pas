@@ -1000,7 +1000,7 @@ begin
 
       if filename<>'' then
       begin
-        Writeln('uploaded file');
+        raise Exception.Create('not implemented');
       end else
       if dataname<>'' then
       begin
