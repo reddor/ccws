@@ -13,7 +13,6 @@ uses
   ChakraCommon,
   ChakraCoreClasses,
   ChakraCoreUtils,
-  ChakraRTTIObject,
   ChakraEventObject,
   Compat,
   Console,
@@ -325,7 +324,7 @@ begin
   if Assigned(FSite) then
     FSite.log(llDebug, s)
   else
-    dolog(llDebug, '[script] ' + string(s));
+    dolog(llDebug, ['[script] ', s]);
 end;
 
 function TChakraSystemObject.setTimeout(Arguments: PJsValueRefArray;
@@ -434,8 +433,8 @@ begin
   case Level of
     ilError: dolog(llError, UTF8Encode(Text));
     ilInfo: dolog(llNotice, UTF8Encode(Text));
-    ilNone: dolog(llDebug, UTF8Encode(Text));
-    ilWarn: dolog(llWarning, UTF8Encode(Text));
+    ilNone: dolog(llDebug,  UTF8Encode(Text));
+    ilWarn: dolog(llWarning,UTF8Encode(Text));
   end;
 end;
 

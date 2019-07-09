@@ -97,11 +97,7 @@ begin
     e:=TChakraProcessEvent.Create('data');
     e.data:=buf;
     e.exitCode:=0;
-    try
-      FTarget.dispatchEvent(e);
-    except
-      dolog(llError, 'Exception in TChakraProcess.data event');
-    end;
+    FTarget.dispatchEvent(e);
     e.Free;
   end else
   begin
@@ -224,7 +220,7 @@ begin
     if FHasTerminated then
       Exit;
 
-    dolog(llDebug, 'Terminating process '+string(FProcess.Executable));
+    dolog(llDebug, ['Terminating process ', FProcess.Executable]);
     FProcess.Terminate(0);
     FHasTerminated:=True;
 
@@ -300,7 +296,7 @@ begin
     if FProcess.Running then
       Exit;
 
-    dolog(llDebug, 'Starting process '+FProcess.Executable);
+    dolog(llDebug, ['Starting process ', FProcess.Executable]);
     if Assigned(FParentThread) then
     begin
       FDataHandler:=TChakraProcessDataHandler.Create(Self, FParentThread);

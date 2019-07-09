@@ -172,12 +172,8 @@ begin
   while FEvents.GetEvent(FPosition, Name, Data) do
   begin
     ev:=TChakraEvent.Create(Name, False);
-    try
-      JsSetProperty(ev.Instance, 'data', StringToJsString(Data));
-      dispatchEvent(ev);
-    except
-      dolog(llError, 'Exception in ChakraEventListener dispatch');
-    end;
+    JsSetProperty(ev.Instance, 'data', StringToJsString(Data));
+    dispatchEvent(ev);
     ev.Free;
   end;
 end;

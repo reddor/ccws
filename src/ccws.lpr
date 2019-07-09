@@ -81,7 +81,7 @@ begin
       dolog(llNotice, 'SIGINT received');
       if shutdown then
       begin
-        dolog(llError, 'Forcing shutdown...');
+        dolog(llError, 'Forcing shutdown... ');
         FpKill(FpGetpid, SIGKILL);
       end;
       shutdown:=True;
@@ -189,7 +189,7 @@ begin
       Limit.rlim_cur:=Limit.rlim_max;
       i:=FpSetRLimit(RLIMIT_NOFILE, @Limit);
       if i=0 then
-        dolog(llNotice, 'Increased RLIMIT_NOFILE from '+string(IntToStr(OldLimit))+' to '+string(IntToStr(Limit.rlim_max)));
+        dolog(llNotice, ['Increased RLIMIT_NOFILE from ', IntToStr(OldLimit), ' to ', IntToStr(Limit.rlim_max)]);
     end;
   end;
   if i<>0 then
@@ -234,7 +234,7 @@ begin
       isdebug:=True;
     end;
 
-    dolog(llNotice, FullServerName);
+    dolog(llNotice, [FullServerName]);
     if not isdebug then
     begin
       ForkToBackground;
@@ -275,7 +275,7 @@ begin
     ServerManager.Destroy;
   except
     on e: Exception do
-      dolog(llFatal, e.Message);
+      LogException(e, 'main');
   end;
   dolog(llNotice, 'Good bye');
 end.

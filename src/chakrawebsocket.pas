@@ -348,7 +348,7 @@ end;
 
 procedure TChakraWebsocket.LoadInstance;
 begin
-  dolog(llDebug, 'Loading Websocket Script at '+StripBasePath(FFilename));
+  dolog(llDebug, ['Loading Websocket Script at ', StripBasePath(FFilename)]);
   if Assigned(FInstance) then
     Exit;
 
@@ -375,7 +375,7 @@ begin
   if FInstance = nil then
     Exit;
 
-  dolog(llDebug, 'Unloading Websocket Script at '+StripBasePath(FFilename));
+  dolog(llDebug, ['Unloading Websocket Script at ', StripBasePath(FFilename)]);
 
   while Length(FClients)>0 do
   begin

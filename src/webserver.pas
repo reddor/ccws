@@ -307,13 +307,13 @@ begin
           x := fpfcntl(ClientSock, F_GETFL, 0);
           if x<0 then
           begin
-            dolog(llError, FIP+':'+FPort+': Could not F_GETFL for '+string(IntToStr(ClientSock)));
+            dolog(llError, [FIP, ':', FPort, ': Could not F_GETFL for ', IntToStr(ClientSock)]);
             continue;
           end else begin
             x := fpfcntl(ClientSock, F_SetFl, x or O_NONBLOCK);
             if x<0 then 
             begin
-              dolog(llError, FIP+':'+FPort+': Could not set NONBLOCK!');
+              dolog(llError, [FIP, ':', FPort, ': Could not set NONBLOCK!']);
               continue;
             end;
           end;
@@ -322,7 +322,7 @@ begin
         begin
           if not AcceptError then
           begin
-            dolog(llWarning, FIP+':'+FPort+': Could not accept incoming connection!');
+            dolog(llWarning, [FIP, ':', FPort, ': Could not accept incoming connection!']);
             AcceptError:=True;
           end;
           { there is nothing we can do - sleep to avoid busyloop as canread()
@@ -331,11 +331,12 @@ begin
         end;
       end;
       except
-        on e: Exception do dolog(llError, string(e.Message));
+        on e: Exception do
+        LogException(e, 'WebserverListener');
       end;
     until Terminated;
     FSock.CloseSocket;
-    dolog(llNotice, 'Stopped listening to '+FIP+':'+FPort);
+    dolog(llNotice, ['Stopped listening to ', FIP, ':', FPort]);
   end;
   FSock.Free;
 end;
@@ -459,7 +460,7 @@ begin
   except
     on E: Exception do
     begin
-      dolog(llError, GetPeerName+': Exception in ProcessRequest: '+ string(E.Message));
+      LogException(e, GetPeerName);
       Close;
     end;
   end;
@@ -477,7 +478,7 @@ begin
     Relocate(p);
   end else
   begin
-    dolog(llDebug, 'Trying websocket but none is avail '+FHeader.url);
+    dolog(llDebug, ['No websocket handler is available for ', FHeader.url]);
     SendStatusCode(404);
   end;
 end;
@@ -504,7 +505,7 @@ begin
   if s = '' then
   begin
     // draft-ietf-hybi-thewebsocketprotocol-00 / hixie76 ?
-    dolog(llNotice, GetPeerName+': Legacy Websocket Connect (Hixie76)');
+    dolog(llNotice, [GetPeerName,': Legacy Websocket Connect (Hixie76)']);
 
     if (FHeader.header.Exists('Sec-WebSocket-Key1')<>-1) and
        (FHeader.header.Exists('Sec-WebSocket-Key2')<>-1) then
@@ -531,20 +532,20 @@ begin
       Delete(FInBuffer, 1, 8);
     end else
     begin
-      dolog(llNotice, GetPeerName+': Unknown websocket handshake');
+      dolog(llNotice, [GetPeerName, ': Unknown websocket handshake']);
       Close;
     end;
   end else
   if s = '7' then
   begin
     // draft-ietf-hybi-thewebsocketprotocol-07
-    dolog(llNotice, GetPeerName+': Legacy Websocket Connect (Hybi07)');
+    dolog(llNotice, [GetPeerName, ': Legacy Websocket Connect (Hybi07)']);
     wsVersion := wvHybi07;
   end else
   if s = '8' then
   begin
     // draft-ietf-hybi-thewebsocketprotocol-10
-    dolog(llNotice, GetPeerName+': Legacy Websocket Connect (Hybi10)');
+    dolog(llNotice, [GetPeerName, ': Legacy Websocket Connect (Hybi10)']);
     wsVersion := wvHybi10;
   end else
   if s = '13' then
@@ -553,7 +554,7 @@ begin
     wsVersion := wvRFC;
   end else
   begin
-    dolog(llNotice, GetPeerName+': Unknown Websocket Version '+s+', dropping.');
+    dolog(llNotice, [GetPeerName, ': Unknown Websocket Version ', s, ', dropping.']);
     Close;
   end;
 
@@ -634,56 +635,6 @@ begin
   end;
 
   SendFile(GetFileMIMEType(FFile), FFile);
-
-  (*
-  if Assigned(FFile) then
-  begin
-    if (pos('gzip', FHeader.header['Accept-Encoding'])>0)and(Assigned(FFile.Gzipdata)) and
-       (FHeader.RangeCount=0) then
-    begin
-      len:=FFIle.GZiplength;
-      Data:=FFile.Gzipdata;
-      FReply.Header.Add('Accept-Ranges', 'bytes');
-      FReply.Header.Add('Vary', 'Accept-Encoding');
-      FReply.Header.Add('Content-Encoding', 'gzip');
-    end else
-    begin
-      len:=FFile.Filelength;
-      Data:=FFile.Filedata;
-    end;
-
-    ARangeStart := 0;
-    ARangeLen := len;
-
-    if FHeader.RangeCount=1 then
-    begin
-      ARangeStart := FHeader.Range[0].min;
-      ARangeLen := FHeader.Range[0].max;
-      Freply.Header.Add('Content-range', 'bytes '+IntToStr(ARangeStart)+'-'+IntToStr(ARangeLen)+'/'+IntToStr(FFile.Filelength-1));
-
-      if (ARangeStart>=FFile.Filelength) then
-        ARangeStart:=FFile.FileLEngth-1;
-
-      if ARangeStart+ARangeLen>FFile.FileLength then
-        ARangeLen:=FFile.FileLength - ARangeStart;
-    end;
-
-    Setlength(s, ARangeLen - (ARangeStart));
-
-    Move(PByteArray(Data)[ARangeStart], s[1], Length(s));
-
-    Freply.header.Add('Expires', DateTimeToHTTPTime(IncSecond(Now, FFile.CacheLength)));
-    if FHeader.RangeCount=1 then
-      SendContent(FFile^.mimetype, s, '206 Partial Content')
-    else
-      SendContent(FFile^.mimetype, s);
-
-    FHost.Files.Release(FFile);
-  end else
-  begin
-    SendStatusCode(403);
-    Exit;
-  end;  *)
 end;
 
 procedure THTTPConnection.RelocateBack;
@@ -899,7 +850,7 @@ begin
         FOnWebsocketData(Self, s);
     end else
     begin
-      dolog(llDebug, GetPeerName+': closing, Invalid packet');
+      dolog(llDebug, [GetPeerName, ': closing, Invalid packet']);
       Close;
       Exit;
     end;
@@ -1038,11 +989,10 @@ begin
           else if FLastPing <> 0 then
             FLag:=DateTimeToTimeStamp(Now).Time - FLastPing;
           FLastPing:=0;
-          //dolog(lldebug, 'got pong, lag '+IntToStr(FLag)+'ms');
         except
           on e: Exception do
           begin
-            dolog(llError, GetPeerName+': send invalid pong reply ' + s + ' '+string(e.Message));
+            LogException(e, GetPeerName);
             Close;
           end;
         end;
@@ -1098,7 +1048,7 @@ begin
       FContentLength:=0;
     end;
     if FContentLength = 0 then
-      dolog(llWarning, GetPeerName+': Got unexpected message body for '+FHeader.action+' '+FHeader.url);
+      dolog(llWarning, [GetPeerName, ': Got unexpected message body for ', FHeader.action, ' ', FHeader.url]);
   end;
 end;
 
@@ -1161,7 +1111,7 @@ begin
 
   if Assigned(FOnPostData) then
   begin
-    dolog(llError, GetPeerName+': Internal error - postdata callback still in place when it should not be');
+    dolog(llError, [GetPeerName, ': Internal error - postdata callback still in place when it should not be']);
     FOnPostData:=nil;
   end;
 
@@ -1259,8 +1209,8 @@ begin
 
   SetThreadCount(0);
 
-  dolog(llNotice, 'Total connections accepted: '+string(IntToStr(FTotalConnections))
-                 +', total requests processed: '+string(IntToStr(FTotalRequests)));
+  dolog(llNotice, ['Total connections accepted: ', IntToStr(FTotalConnections),
+                 ', total requests processed: ', IntToStr(FTotalRequests)]);
   FSiteManager.Destroy;
 
   for i:=0 to FCachedConnectionCount-1 do
@@ -1288,7 +1238,7 @@ begin
 
   if Count < FWorkerCount then
   begin
-    dolog(llDebug, 'Decimating threads from '+string(IntToStr(FWorkerCount))+' to '+string(IntToStr(Count)));
+    dolog(llDebug, ['Decimating threads from ', IntToStr(FWorkerCount), ' to ', IntToStr(Count)]);
     for i:=Count to FWorkerCount-1 do
       FWorker[i].Terminate;
 
@@ -1304,7 +1254,7 @@ begin
   if Count > FWorkerCount then
   begin
     if FWorkerCount <> 0 then // surpress initial message
-    dolog(llDebug, 'Increasing threads from '+string(IntToStr(FWorkerCount))+' to '+string(IntToStr(Count)));
+    dolog(llDebug, ['Increasing threads from ', IntToStr(FWorkerCount), ' to ', IntToStr(Count)]);
     Setlength(FWorker, Count);
     for i:=FWorkerCount to Count-1 do
       FWorker[i]:=TWebserverWorkerThread.Create(Self);
@@ -1322,7 +1272,7 @@ begin
     Exit;
   end;
 
-  dolog(llNotice, 'Creating listener for '''+IP+':'+Port+'''');
+  dolog(llNotice, ['Creating listener for ''', IP, ':', Port, '''']);
   result:=TWebserverListener.Create(Self, IP, Port);
   FCS.Enter;
   try
@@ -1356,10 +1306,10 @@ begin
   end;
   if result then
   begin
-    dolog(llNotice, 'Removing listener for '''+Listener.IP+':'+Listener.Port+'''');
+    dolog(llNotice, ['Removing listener for ''', Listener.IP, ':', Listener.Port, '''']);
     Listener.Free;
   end else
-    dolog(llNotice, 'Could not remove listener for '''+Listener.IP+':'+Listener.Port+'''');
+    dolog(llNotice, ['Could not remove listener for ''', Listener.IP, ':', Listener.Port, '''']);
 end;
 
 const
