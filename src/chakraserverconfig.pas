@@ -189,7 +189,7 @@ begin
   result:=JsUndefinedValue;
   if Assigned(FWSInstance) then
   begin
-    dolog(llNotice, 'Unloading ' + FWSInstance.url);
+    dolog(llNotice, ['Unloading ', FWSInstance.url]);
     FWSInstance.Site.RemoveCustomHandler(FWSInstance.url);
     FreeAndNil(FWSInstance);
   end;

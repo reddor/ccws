@@ -122,7 +122,7 @@ begin
   begin
     {$I-}BlockWrite(f, aContent[1], Length(aContent));{$I+}
     if ioresult<>0 then
-      dolog(llError, aFilename+': Could not write to disk!');
+      dolog(llError, [aFilename, ': Could not write to disk!']);
     Closefile(f);
   end;
 end;
@@ -163,7 +163,7 @@ end;
 
 procedure TWebserverSite.log(Level: TLoglevel; Msg: string);
 begin
-  dolog(Level, '['+FName+'] '+Msg);
+  dolog(Level, ['[', FName, '] ', Msg]);
 end;
 
 function IntToFilesize(Size: longword): string;
@@ -438,7 +438,7 @@ begin
   i:=Length(FHosts);
   Setlength(FHosts, i+1);
   FHosts[i]:=result;
-  dolog(llNotice, 'Loaded site "'+Path+'"');
+  dolog(llNotice, ['Loaded site "', Path, '"']);
   // result.AddHostAlias(Hostname);
 end;
 

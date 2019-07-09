@@ -1,4 +1,5 @@
 # ccws - ChakraCore powered WebSocket Server 
+![build status](https://sqrctl.de/ccws-buildstatus.svg)
 
 ccws is a lightweight linux-only web(socket)-server. It is the spiritual successor to my previous project [besenws](http://github.com/reddor/besenws) and currently under heavy construction. Under _no way_ it is encouraged to use this software in a productive or public environment.
 

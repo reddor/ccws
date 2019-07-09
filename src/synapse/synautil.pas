@@ -50,6 +50,7 @@
 {:@abstract(Support procedures and functions)}
 
 {$I jedi.inc} // load common compiler defines
+{$warnings off}
 
 {$Q-}
 {$R-}

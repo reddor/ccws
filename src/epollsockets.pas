@@ -172,8 +172,7 @@ type
 
 const
   { Default waiting time for epoll }
-  EpollWaitTime = 20;
-
+  EpollWaitTime = 100;
 
 implementation
 
@@ -203,7 +202,7 @@ begin
 
   if epoll_ctl(FParent.epollfd, EPOLL_CTL_ADD, Handle, @event)<0 then
   begin
-    dolog(llDebug, 'epoll_ctl_add failed, error #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(Handle)));
+    dolog(llDebug, ['epoll_ctl_add failed, error #', IntToStr(fpgeterrno), ' ', IntToStr(Handle)]);
   end else
   begin
     i:=Length(FHandles);
@@ -222,7 +221,7 @@ begin
       FHandles[i]:=FHandles[Length(FHandles)-1];
       Setlength(FHandles, Length(FHandles)-1);
       if epoll_ctl(FParent.epollfd, EPOLL_CTL_DEL, Handle, nil)<0 then
-        dolog(llError, 'Custom epoll_ctl_del failed #'+string(IntToStr(fpgeterrno))+' '+string(IntToStr(Handle)));
+        dolog(llError, ['Custom epoll_ctl_del failed #', IntToStr(fpgeterrno), ' ', IntToStr(Handle)]);
       Exit;
     end;
 end;
@@ -365,7 +364,7 @@ begin
         end;
         else
         begin
-          dolog(llDebug, GetPeerName+': error in fprecv #'+string(IntTostr(err)));
+          dolog(llDebug, [GetPeerName, ': error in fprecv #', IntToStr(err)]);
           result:=False;
           FWantClose:=True;
         end;
@@ -419,7 +418,7 @@ begin
       if i=0 then
       begin
         // I don't think that should ever happen according to manpages
-        dolog(llDebug, GetPeerName+': fpsend Could not send anything, #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(i)));
+        dolog(llDebug, [GetPeerName, ': fpsend Could not send anything, #', IntToStr(fpgeterrno), ' ', IntToStr(i)]);
       end else
       if i<0 then
       begin
@@ -443,7 +442,7 @@ begin
           // I don't think that should ever happen according to manpages
           else begin
             // unknown error, log
-            dolog(llError, GetPeerName+': Error in fpsend #'+string(IntTostr(err))+' '+string(IntToStr(i)));
+            dolog(llError, [GetPeerName, ': Error in fpsend #', IntToStr(err), ' ', IntToStr(i)]);
             FWantclose:=True;
             i:=-1;
           end;
@@ -462,7 +461,7 @@ begin
       event.Events:=EPOLLIN or EPOLLOUT;
       event.Data.ptr:=Self;
       if epoll_ctl(FParent.epollfd, EPOLL_CTL_MOD, FSocket, @event)<0 then
-        dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin+epollout), error #'+string(IntTostr(fpgeterrno)));
+        dolog(llDebug, [GetPeerName, ': epoll_ctl_mod failed (epollin+epollout), error #', IntToStr(fpgeterrno)]);
     end else
     if (Length(FOutbuffer)=0)and(Length(FOutbuffer2)>0) then
     begin
@@ -475,7 +474,7 @@ begin
    event.Events:=EPOLLIN;
    event.Data.ptr:=Self;
    if epoll_ctl(FParent.epollfd, EPOLL_CTL_MOD, FSocket, @event)<0 then
-     dolog(llDebug, GetPeerName+': epoll_ctl_mod failed (epollin), error #'+string(IntTostr(fpgeterrno)));
+     dolog(llDebug, [GetPeerName, ': epoll_ctl_mod failed (epollin), error #', IntToStr(fpgeterrno)]);
   end;
 end;
 
@@ -519,7 +518,7 @@ begin
   FParent:=NewParent;
   if not NewParent.Callback(@AddCallback) then
   begin
-    dolog(llError, GetPeerName+': Callback for relocation failed, dropping!');
+    dolog(llError, [GetPeerName, ': Callback for relocation failed, dropping!']);
     FParent:=nil;
     FWantClose:=True;
     Dispose;
@@ -614,7 +613,7 @@ begin
   fpfcntl(FPipeOutput, F_SetFl, fpfcntl(FPipeOutput, F_GetFl) or O_NONBLOCK);
   if epoll_ctl(epollfd, EPOLL_CTL_ADD, FPipeOutput, @event)<0 then
   begin
-    dolog(llError, 'epoll_ctl_add pipe failed, error #'+string(IntTostr(fpgeterrno))+' ');
+    dolog(llError, ['epoll_ctl_add pipe failed, error #', IntToStr(fpgeterrno)]);
   end;
 
   GetMem(Data, InternalBufferSize);
@@ -639,7 +638,7 @@ begin
     end else
     if not Assigned((FEpollEvents[j].data.ptr)) then
     begin
-      dolog(llDebug, 'Epoll event without handler received');
+      dolog(llError, 'Epoll event without handler received');
     end else
     if TObject(FEPollEvents[j].data.ptr) is TCustomEpollHandler then
     begin
@@ -661,7 +660,7 @@ begin
 
       if conn.FParent <> Self then
       begin
-        dolog(llError, conn.GetPeerName+': got epoll message from connection located in different thread');
+        dolog(llError, [conn.GetPeerName, ': got epoll message from connection located in different thread']);
       end else
       if (FEpollEvents[j].Events and EPOLLIN<>0) then
       begin
@@ -671,11 +670,11 @@ begin
         conn.FlushSendbuffer;
       end else if (FEpollEvents[j].Events and EPOLLERR<>0) then
       begin
-        dolog(llDebug, 'got epoll-error '+string(Inttostr(fpgeterrno)));
+        dolog(llDebug, ['got epoll-error ', IntToStr(fpgeterrno)]);
         conn.FWantclose:=True;
       end else
       begin
-        dolog(llDebug, 'unknown epoll-event '+string(IntToStr(FEpollEvents[j].Events)));
+        dolog(llDebug, ['unknown epoll-event ', IntToStr(FEpollEvents[j].Events)]);
         conn.FWantclose:=True;
       end;
 
@@ -698,12 +697,12 @@ begin
   except
     on E: Exception do
     begin
-      dolog(llFatal, 'Epoll-thread died with unhandled exception: '+string(e.Message));
-      dolog(llFatal, 'You should probably restart the server now');
+      dolog(llFatal, 'BUG: Unhandled exception in epoll worker thread!');
+      dolog(llFatal, DumpExceptionCallStack(e));
     end;
   end;
   Finalize;
-  j:=High(FSockets);
+  j:=FSocketCount;
   while j>=0 do
   begin
     RemoveSocket(FSockets[j]);
@@ -721,7 +720,7 @@ begin
   if FSockets[i] = Sock then
   begin
     if epoll_ctl(epollfd, EPOLL_CTL_DEL, FSockets[i].Socket, nil)<0 then
-      dolog(llError, 'epoll_ctl_del failed #'+string(IntToStr(fpgeterrno)));
+      dolog(llError, ['epoll_ctl_del failed #', IntToStr(fpgeterrno)]);
 
     sock.FParent:=nil;
 
@@ -827,7 +826,7 @@ begin
 
   if epoll_ctl(epollfd, EPOLL_CTL_ADD, Sock.Socket, @event)<0 then
   begin
-    dolog(llDebug, 'epoll_ctl_add failed, error #'+string(IntTostr(fpgeterrno))+' '+string(IntToStr(Sock.FSocket)));
+    dolog(llDebug, ['epoll_ctl_add failed, error #', IntToStr(fpgeterrno), ' ', IntToStr(Sock.FSocket)]);
     result:=False;
   end else
   begin

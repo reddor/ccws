@@ -363,7 +363,7 @@ end;
 
 procedure TChakraWebsocket.LoadInstance;
 begin
-  dolog(llDebug, 'Loading Websocket Script at '+StripBasePath(FFilename));
+  dolog(llDebug, ['Loading Websocket Script at ', StripBasePath(FFilename)]);
   if Assigned(FInstance) then
     Exit;
 
@@ -390,7 +390,7 @@ begin
   if FInstance = nil then
     Exit;
 
-  dolog(llDebug, 'Unloading Websocket Script at '+StripBasePath(FFilename));
+  dolog(llDebug, ['Unloading Websocket Script at ', StripBasePath(FFilename)]);
 
   while Length(FClients)>0 do
   begin
@@ -590,6 +590,7 @@ begin
         THTTPConnection(Client).SendStatusCode(404);
         if THTTPConnection(Client).KeepAlive then
         begin
+          aClient.FConnection:=nil;
           THTTPConnection(Client).RelocateBack;
         end else
         begin
@@ -738,11 +739,11 @@ begin
        ws.AddConnectionToFlush(FConnection);
       if (not FConnection.Closed) and FConnection.KeepAlive then
       begin
-
-        FConnection.RelocateBack;
+           FConnection.RelocateBack;
+           FConnection:=nil;
       end else
       begin
-        FConnection.Close;
+          FConnection.Close;
       end;
       ws.RemoveWebsocketClient(Self);
     end else

@@ -13,14 +13,16 @@ uses
 
 type
   TLoglevel = (llDebug=0, llNotice=1, llWarning=2, llError=3, llFatal=4);
-  TLogItems = array of Variant;
 
 var
   GlobalLogLevel: TLoglevel;
 
-procedure dolog(LogLevel: TLogLevel; const Message: TLogItems); overload;
+procedure dolog(LogLevel: TLogLevel; Message: array of string); overload;
 procedure dolog(Loglevel: TLoglevel; msg: string); overload;
 procedure LogToFile(filename: string);
+function DumpExceptionCallStack(E: Exception): string;
+procedure LogException(E: Exception); overload;
+procedure LogException(E: Exception; Section: string); overload;
 
 implementation
 
@@ -38,9 +40,10 @@ begin
 
 end;
 
-procedure dolog(LogLevel: TLogLevel; const Message: TLogItems);
+procedure dolog(LogLevel: TLogLevel; Message: array of string);
 var
   i: Integer;
+  target: TextFile;
 begin
   if LogLevel<GlobalLogLevel then
     Exit;
@@ -53,9 +56,20 @@ begin
     llError:   Write('  [Error] ');
     llFatal:   Write('  [Fatal] ');
   end;
-  for i:=Low(Message) to High(Message) do
-    Write(Message[i]);
-  Writeln;
+  if DoLogToFile then
+    target:=FileHandle
+  else
+    target:=StdOut;
+
+  CS.Enter;
+  try
+    for i:=Low(Message) to High(Message) do
+      Write(target, Message[i]);
+    Writeln(target);
+  finally
+    CS.Leave;
+  end;
+  Flush(Target);
 end;
 
 procedure dolog(Loglevel: TLoglevel; msg: string);
@@ -84,6 +98,33 @@ begin
     Flush(StdOut);
   end;
   CS.Leave;
+end;
+
+function DumpExceptionCallStack(E: Exception): string;
+var
+  I: Integer;
+  Frames: PPointer;
+begin
+  if E <> nil then
+  begin
+    Result := 'Exception class: ' + E.ClassName + LineEnding +
+    'Message: ' + E.Message + LineEnding;
+  end else
+    Result := 'Stacktrace:' + LineEnding;
+  Result := Result + BackTraceStrFunc(ExceptAddr);
+  Frames := ExceptFrames;
+  for I := 0 to ExceptFrameCount - 1 do
+    Result := Result + LineEnding + BackTraceStrFunc(Frames[I]);
+end;
+
+procedure LogException(E: Exception);
+begin
+  dolog(llError, [DumpExceptionCallStack(e)]);
+end;
+
+procedure LogException(E: Exception; Section: string);
+begin
+  dolog(llError, ['[', Section, '] ', DumpExceptionCallStack(e)]);
 end;
 
 initialization
