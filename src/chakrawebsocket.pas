@@ -104,6 +104,8 @@ type
     function remove(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { send(data - send data to all clients in bulk send list}
     function send(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
+    { disconnect all clients and remove from list }
+    function disconnectAll(Arguments: PJsValueRefArray; CountArguments: word): JsValueRef;
     { amount of clients in list }
     property count: Integer read GetLength;
   end;
@@ -264,6 +266,19 @@ begin
     end;
   end else
     RemoveClient(FClients[i]);
+end;
+
+function TChakraWebsocketBulkSender.disconnectAll(Arguments: PJsValueRefArray;
+  CountArguments: word): JsValueRef;
+var
+  i: Integer;
+begin
+  Result:=JsUndefinedValue;
+  for i:=0 to Length(FClients)-1 do
+  begin
+    FClients[i].FConnection.Close;
+  end;
+  Setlength(FClients, 0);
 end;
 
 { TChakraWebsocketHandler }
